@@ -11,13 +11,28 @@ import { DialogModule } from 'primeng/dialog';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { FormsModule } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
+import { TabulatorTableComponent, TableConfig } from '../tabulator-table/tabulator-table.component';
 import { TableStateService } from '../home/table-state.service';
 import { ApiService } from '../../services/api.service';
 
 @Component({
     selector: 'app-home',
     standalone: true,
-    imports: [CommonModule, CardModule, ChartModule, TableModule, ChipModule, ButtonModule, InputTextModule, BadgeModule, DialogModule, AutoCompleteModule, FormsModule, TooltipModule],
+    imports: [
+        CommonModule,
+        CardModule,
+        ChartModule,
+        TableModule,
+        ChipModule,
+        ButtonModule,
+        InputTextModule,
+        BadgeModule,
+        DialogModule,
+        AutoCompleteModule,
+        FormsModule,
+        TooltipModule,
+        TabulatorTableComponent
+    ],
     templateUrl: './home.html',
     styleUrls: ['./home.css']
 })
@@ -49,6 +64,20 @@ export class Home implements OnInit {
 
     // Table data - will be loaded from backend
     tableData: any[] = [];
+
+    // Tabulator configuration
+    tabulatorConfig: TableConfig = {
+        title: 'Market Pulse Data',
+        editable: false,
+        allowImport: true,
+        allowExport: true,
+        allowS3Fetch: true,
+        pagination: true,
+        paginationSize: 20,
+        selectable: true,
+        movableColumns: true,
+        headerFilter: true
+    };
 
     constructor(
         private tableStateService: TableStateService,
@@ -334,6 +363,22 @@ export class Home implements OnInit {
         this.filterVisible = false;
         // TODO: Send filters to backend API
         // this.apiService.applyFilters(allFilters).subscribe(...)
+    }
+
+    // ==================== TABULATOR TABLE METHODS ====================
+
+    onTableDataChanged(updatedData: any[]) {
+        console.log('📊 Tabulator data changed:', updatedData.length, 'rows');
+        // Handle data changes from editable table
+    }
+
+    onTableDataLoaded(loadedData: any[]) {
+        console.log('📥 Tabulator data loaded:', loadedData.length, 'rows');
+        this.tableData = loadedData;
+    }
+
+    onTableRowSelected(selectedRows: any[]) {
+        console.log('✅ Tabulator rows selected:', selectedRows.length);
     }
 
     // ==================== TABLE ACTIONS ====================

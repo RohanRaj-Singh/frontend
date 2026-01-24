@@ -32,9 +32,13 @@
                             }
                         ],
                         "styles": [
-                            "src/assets/styles.scss"
+                            "src/assets/styles.scss",
+                            "node_modules/tabulator-tables/dist/css/tabulator.min.css"
                         ],
-                        "scripts": []
+                        "scripts": [
+                            "node_modules/tabulator-tables/dist/js/tabulator.min.js",
+                            "node_modules/xlsx/dist/xlsx.full.min.js"
+                        ]
                     },
                     "configurations": {
                         "production": {
