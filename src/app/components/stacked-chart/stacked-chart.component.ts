@@ -5,81 +5,84 @@ import { NgxEchartsDirective } from 'ngx-echarts';
     selector: 'stacked-chart',
     standalone: true,
     imports: [NgxEchartsDirective],
-    templateUrl: 'stacked-chart.component.html'
+    templateUrl: './stacked-chart.component.html'
 })
 export class StackedChartComponent {
-    readonly options = {
+    readonly months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // 👇 FORCE chart to be wider than container
+    // 1 bar = 58px
+    // gap ≈ 40px
+    readonly chartWidth = this.months.length * (58 + 40);
+
+    options = {
         grid: {
-            left: 24,
-            right: 24,
-            top: 32, // ⬆ more top padding
-            bottom: 32 // ⬆ more bottom padding
+            left: 30,
+            right: 30,
+            top: 40,
+            bottom: 36,
+            height: 80
         },
 
         xAxis: {
             type: 'category',
-            data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            data: this.months,
             axisLine: { show: false },
             axisTick: { show: false },
             axisLabel: {
                 color: '#6B7280',
-                fontSize: 12
+                fontSize: 12,
+                margin: 12
             }
         },
 
         yAxis: {
-            show: false
+            show: false,
+            max: 4
         },
 
         series: [
-            // block 1 (darkest)
             {
                 type: 'bar',
                 stack: 'total',
-                barWidth: 64, // ⬇ thinner bars
-                barGap: '1%', // ⬆ more space between bars
-                data: Array(11).fill(1),
+                barWidth: 58,
+                barCategoryGap: '70%', // month spacing
+                barGap: '20%', // ✅ vertical gap BETWEEN stacked blocks
+                data: Array(12).fill(1),
                 itemStyle: {
                     color: '#334155',
-                    borderRadius: [6, 6, 0, 0]
+                    borderRadius: [2, 2, 0, 0]
                 }
             },
-
-            // block 2
             {
                 type: 'bar',
                 stack: 'total',
-                data: Array(11).fill(1),
-                itemStyle: {
-                    color: '#475569'
-                }
+                barGap: '20%',
+                data: Array(12).fill(1),
+                itemStyle: { color: '#475569' }
             },
-
-            // block 3
             {
                 type: 'bar',
                 stack: 'total',
-                data: Array(11).fill(1),
-                itemStyle: {
-                    color: '#64748B'
-                }
+                barGap: '20%',
+                data: Array(12).fill(1),
+                itemStyle: { color: '#64748B' }
             },
-
-            // block 4 (top, with label)
             {
                 type: 'bar',
                 stack: 'total',
-                data: Array(11).fill(1),
+                barGap: '20%',
+                data: Array(12).fill(1),
                 itemStyle: {
                     color: '#94A3B8',
-                    borderRadius: [0, 0, 6, 6]
+                    borderRadius: [0, 0, 2, 2]
                 },
                 label: {
                     show: true,
-                    position: 'top', // ✅ ON TOP
-                    rotate: 0, // ✅ NOT SIDEWAYS
-                    distance: 6,
-                    formatter: (_: any, index: number) => (index % 2 === 0 ? '1.2K' : '2.1K'),
+                    position: 'top',
+                    rotate: 0,
+                    distance: 8, // ⬆ more breathing room
+                    formatter: '2.1K',
                     color: '#6B7280',
                     fontSize: 12,
                     fontWeight: 500
