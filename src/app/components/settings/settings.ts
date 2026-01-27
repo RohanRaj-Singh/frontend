@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AssetStateService, AssetOption } from 'src/app/services/asset-state.service';
 
 interface CornJob {
     name: string;
@@ -66,6 +67,7 @@ interface RestoreData {
 })
 export class Settings implements OnInit {
     // Active dropdown options
+    selectedAsset!: AssetOption;
     activeOptions: any[] = [
         { label: 'Yes', value: 'Yes' },
         { label: 'No', value: 'No' }
@@ -239,7 +241,8 @@ export class Settings implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private router: Router
+        private router: Router,
+        private assetStateService: AssetStateService
     ) {
         this.generateCalendar();
     }
@@ -249,11 +252,22 @@ export class Settings implements OnInit {
         this.route.queryParams.subscribe((params) => {
             const section = params['section'];
             if (section) {
+                setTimeout(() => {
+                    this.scrollToSection(section + '-section');
+                }, 100);
+            }
+        });
+        this.route.queryParams.subscribe((params) => {
+            const section = params['section'];
+            if (section) {
                 // Use setTimeout to ensure the DOM is rendered before scrolling
                 setTimeout(() => {
                     this.scrollToSection(section + '-section');
                 }, 100);
             }
+        });
+        this.assetStateService.asset$.subscribe((asset) => {
+            this.selectedAsset = asset;
         });
     }
 

@@ -6,6 +6,7 @@ import { StyleClassModule } from 'primeng/styleclass';
 import { LayoutService } from '../service/layout.service';
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
+import { AssetStateService } from 'src/app/services/asset-state.service';
 import { filter, Subscription } from 'rxjs';
 
 @Component({
@@ -15,10 +16,6 @@ import { filter, Subscription } from 'rxjs';
     template: `
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
-            <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
-                <i class="pi pi-bars"></i>
-            </button>
-
             <a class="layout-topbar-logo flex items-center gap-4" routerLink="/">
                 <img src="./assets/logo/logo2.png" alt="Logo" class="layout-topbar-logo-image">
 
@@ -48,11 +45,13 @@ import { filter, Subscription } from 'rxjs';
             <!-- ASSET SELECTION (HOME ONLY) -->
             <div class="asset-selection" *ngIf="isHomeRoute">
                 <p-select
-                    [options]="assetOptions"
-                    [(ngModel)]="selectedAsset"
-                    optionLabel="name"
-                    class="asset-selector">
-                </p-select>
+  [options]="assetOptions"
+  [(ngModel)]="selectedAsset"
+  optionLabel="name"
+  class="asset-selector"
+  (ngModelChange)="onAssetChange($event)">
+</p-select>
+
             </div>
 
             <!-- Next Run Timer -->
@@ -200,7 +199,8 @@ export class AppTopbar implements OnInit, OnDestroy {
 
     constructor(
         public layoutService: LayoutService,
-        private router: Router
+        private router: Router,
+        private assetStateService: AssetStateService
     ) {}
 
     ngOnInit(): void {
@@ -215,6 +215,9 @@ export class AppTopbar implements OnInit, OnDestroy {
 
     private updateHomeRoute(url: string): void {
         this.isHomeRoute = url === '/' || url.startsWith('/home');
+    }
+    onAssetChange(asset: any) {
+        this.assetStateService.setAsset(asset);
     }
 
     ngOnDestroy(): void {

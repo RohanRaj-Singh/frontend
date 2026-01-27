@@ -1,6 +1,13 @@
 <div class="">
     <div class="bg-white p-6 rounded-lg border border-gray-200 mb-8">
-        <h1 class="text-2xl font-bold text-black">Settings</h1>
+        <!-- HEADER ROW -->
+        <div class="flex items-center justify-between mb-2">
+            <h1 class="text-2xl font-bold text-black">Settings</h1>
+
+            <!-- Selected Asset (subtle) -->
+            <span class="text-2xl font-bold text-gray-600"> {{ selectedAsset.name }} </span>
+        </div>
+
         <p class="text-black mt-2">Manage your asset class rules and preferences</p>
 
         <hr class="my-6 border-gray-300" />
@@ -13,6 +20,7 @@
             <span (click)="scrollToSection('restore-email-section')" class="bg-gray-100 rounded-full px-4 py-2 border border-gray-200 inline-block whitespace-nowrap cursor-pointer hover:bg-gray-50">Restore & Email</span>
         </div>
     </div>
+
     <!-- Main content row -->
     <div id="rules-section" class="flex flex-col lg:flex-row">
         <!-- Rules Section -->
