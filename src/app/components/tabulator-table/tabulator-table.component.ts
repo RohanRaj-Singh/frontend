@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { TabulatorService, TableData } from './tabulator.service';
 
@@ -25,7 +26,7 @@ export interface TableConfig {
 @Component({
     selector: 'app-tabulator-table',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, FileUploadModule, ToastModule],
+    imports: [CommonModule, FormsModule, ButtonModule, FileUploadModule, ToastModule, TooltipModule],
     templateUrl: './tabulator-table.component.html',
     styleUrls: ['./tabulator-table.component.css'],
     providers: [MessageService]
@@ -49,6 +50,7 @@ export class TabulatorTableComponent implements OnInit {
 
     @Input() initialData: any[] = [];
     @Input() columns: any[] = [];
+    @Input() showExpandButton: boolean = false; // Only show on home page
 
     // Output events
     @Output() dataChanged = new EventEmitter<any[]>();

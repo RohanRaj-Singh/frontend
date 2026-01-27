@@ -144,7 +144,8 @@
         <!-- ================= TABULATOR TABLE ================= -->
         <app-tabulator-table 
             [config]="tabulatorConfig" 
-            [initialData]="tableData" 
+            [initialData]="tableData"
+            [showExpandButton]="true"
             (dataChanged)="onTableDataChanged($event)" 
             (dataLoaded)="onTableDataLoaded($event)" 
             (rowSelected)="onTableRowSelected($event)"
@@ -179,7 +180,8 @@
         <div class="flex-1 overflow-auto px-6 py-4">
             <app-tabulator-table 
                 [config]="tabulatorConfig" 
-                [initialData]="tableData" 
+                [initialData]="tableData"
+                [showExpandButton]="true"
                 (dataChanged)="onTableDataChanged($event)" 
                 (dataLoaded)="onTableDataLoaded($event)" 
                 (rowSelected)="onTableRowSelected($event)"

@@ -1,21 +1,11 @@
-<div class="p-6 space-y-4">
+<div class="space-y-4">
     <!-- TOAST NOTIFICATIONS -->
     <p-toast position="top-right"></p-toast>
 
-    <!-- Top Toolbar -->
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <!-- Left Side Actions -->
+    <!-- Top Toolbar - Only show selection info, not expand button -->
+    <div class="flex flex-wrap items-center justify-between gap-3" *ngIf="selectedRows.length > 0 || config.editable">
+        <!-- Left Side - Selection Info -->
         <div class="flex flex-wrap items-center gap-3">
-            <!-- Expand/Collapse Button -->
-            <button 
-                pButton 
-                [icon]="isExpanded ? 'pi pi-compress' : 'pi pi-window-maximize'"
-                [label]="isExpanded ? 'Minimize' : 'Expand Table'"
-                class="!rounded-full !px-5 !py-2.5 !bg-gray-900 !text-white hover:!bg-black"
-                (click)="toggleExpand()"
-                [pTooltip]="isExpanded ? 'Return to normal view' : 'Expand table to full screen'"
-            ></button>
-
             <!-- Selection Info -->
             <div *ngIf="selectedRows.length > 0" class="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full">
                 <i class="pi pi-check-circle text-blue-600"></i>
@@ -63,6 +53,20 @@
         </div>
     </div>
 
-    <!-- TABLE CONTAINER - Figma Style -->
-    <div id="data-table" #tableContainer class="!rounded-2xl overflow-hidden border border-gray-200"></div>
+    <!-- TABLE CONTAINER with embedded expand button -->
+    <div class="relative">
+        <!-- Expand Button - Positioned inside table (top right) -->
+        <button 
+            *ngIf="showExpandButton"
+            pButton 
+            [icon]="isExpanded ? 'pi pi-compress' : 'pi pi-window-maximize'"
+            class="absolute top-4 right-4 z-10 !rounded-lg !px-3 !py-2 !bg-white !text-gray-700 !border !border-gray-300 hover:!bg-gray-50 shadow-sm"
+            (click)="toggleExpand()"
+            [pTooltip]="isExpanded ? 'Minimize table' : 'Expand table to full screen'"
+            tooltipPosition="left"
+        ></button>
+
+        <!-- TABLE CONTAINER - Figma Style -->
+        <div id="data-table" #tableContainer class="!rounded-2xl overflow-hidden border border-gray-200"></div>
+    </div>
 </div>

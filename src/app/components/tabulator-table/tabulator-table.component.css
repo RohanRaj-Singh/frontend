@@ -228,3 +228,32 @@
 :host-context(.table-expanded) ::ng-deep .tabulator {
     height: calc(100vh - 120px) !important;
 }
+
+/* ================================
+   EXPAND BUTTON (EMBEDDED IN TABLE)
+   ================================ */
+
+/* Ensure the expand button stays above table content */
+:host ::ng-deep .relative {
+    position: relative;
+}
+
+/* Expand button positioning and style */
+.expand-button-container {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+}
+
+/* Adjust table header to accommodate button */
+:host ::ng-deep .tabulator-header {
+    padding-right: 60px; /* Make room for expand button */
+}
+
+/* Responsive: hide button label on small screens */
+@media (max-width: 768px) {
+    :host ::ng-deep .tabulator-header {
+        padding-right: 50px;
+    }
+}
