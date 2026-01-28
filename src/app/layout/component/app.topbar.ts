@@ -17,8 +17,10 @@ import { filter, Subscription } from 'rxjs';
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
             <a class="layout-topbar-logo flex items-center gap-4" routerLink="/">
-                <img src="./assets/logo/logo2.png" alt="Logo" class="layout-topbar-logo-image">
-
+            <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
+            <i class="pi pi-bars"></i>
+            </button>
+            <img src="./assets/logo/logo2.png" alt="Logo" class="layout-topbar-logo-image">
                 <!-- Brand -->
                 <div class="flex flex-col leading-tight">
                     <span class="font-bold whitespace-nowrap">

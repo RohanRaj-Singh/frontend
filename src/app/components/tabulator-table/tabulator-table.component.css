@@ -27,12 +27,13 @@
    ================================ */
 
 :host ::ng-deep .tabulator-header {
-    background-color: #ffffff; /* ✅ white header */
+    background-color: #ffffff;
     border-bottom: 1px solid #d1d5db;
+    padding-right: 56px; /* space for expand button */
 }
 
 :host ::ng-deep .tabulator-col {
-    background-color: #ffffff; /* ✅ force white */
+    background-color: #ffffff;
     border-right: 1px solid #d1d5db;
     border-bottom: 1px solid #d1d5db;
     padding: 10px 12px;
@@ -41,7 +42,6 @@
     color: #374151;
 }
 
-/* Remove last header column right border */
 :host ::ng-deep .tabulator-col:last-child {
     border-right: none;
 }
@@ -67,20 +67,10 @@
     border-color: #9ca3af;
 }
 
-:host ::ng-deep .select-row-btn:active {
-    background-color: #e5e7eb;
-}
-
-/* Selected row button state */
 :host ::ng-deep .tabulator-row.tabulator-selected .select-row-btn {
     background-color: #1f2937;
     color: #ffffff;
     border-color: #1f2937;
-}
-
-:host ::ng-deep .tabulator-row.tabulator-selected .select-row-btn:hover {
-    background-color: #111827;
-    border-color: #111827;
 }
 
 /* ================================
@@ -89,7 +79,6 @@
 
 :host ::ng-deep .tabulator-row {
     background-color: #ffffff;
-    transition: background-color 0.15s ease;
 }
 
 :host ::ng-deep .tabulator-row:hover {
@@ -98,10 +87,6 @@
 
 :host ::ng-deep .tabulator-row.tabulator-selected {
     background-color: #eff6ff !important;
-}
-
-:host ::ng-deep .tabulator-row.tabulator-selected:hover {
-    background-color: #dbeafe !important;
 }
 
 :host ::ng-deep .tabulator-cell {
@@ -115,51 +100,12 @@
     text-overflow: ellipsis;
 }
 
-/* Remove last column right border */
 :host ::ng-deep .tabulator-cell:last-child {
     border-right: none;
 }
 
-/* Remove last row bottom border */
-:host ::ng-deep .tabulator-row:last-child .tabulator-cell {
-    border-bottom: none;
-}
-
 /* ================================
-   FROZEN COLUMNS (OPTIONAL)
-   ================================ */
-
-:host ::ng-deep .tabulator-frozen {
-    border-right: 2px solid #d1d5db !important;
-    background-color: #ffffff;
-    z-index: 2;
-}
-
-:host ::ng-deep .tabulator-row.tabulator-selected .tabulator-frozen {
-    background-color: #eff6ff !important;
-}
-
-/* ================================
-   ROW NUMBER COLUMN
-   ================================ */
-
-:host ::ng-deep .tabulator-row-number {
-    text-align: center;
-    color: #6b7280;
-    font-variant-numeric: tabular-nums;
-}
-
-/* ================================
-   SELECTION / ACTIVE STATES
-   ================================ */
-
-:host ::ng-deep .tabulator-cell:focus {
-    outline: none;
-    background-color: #ffffff;
-}
-
-/* ================================
-   PAGINATION / BOTTOM BUTTONS
+   PAGINATION
    ================================ */
 
 :host ::ng-deep .tabulator-footer {
@@ -168,43 +114,24 @@
     padding: 10px 12px;
 }
 
-:host ::ng-deep .tabulator-paginator {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
 :host ::ng-deep .tabulator-page {
     border: 1px solid #d1d5db;
     background-color: #ffffff;
     color: #374151;
     padding: 6px 12px;
-    border-radius: 8px; /* ✅ pill buttons */
+    border-radius: 8px;
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
 }
 
-/* Hover */
-:host ::ng-deep .tabulator-page:hover {
-    background-color: #f3f4f6;
-}
-
-/* Active page */
 :host ::ng-deep .tabulator-page.active {
     background-color: #111827;
     color: #ffffff;
     border-color: #111827;
 }
 
-/* Disabled */
-:host ::ng-deep .tabulator-page.disabled {
-    opacity: 0.4;
-    cursor: default;
-}
-
 /* ================================
-   SCROLLBAR (CLEAN)
+   SCROLLBAR
    ================================ */
 
 :host ::ng-deep .tabulator-tableholder::-webkit-scrollbar {
@@ -213,49 +140,57 @@
 }
 
 :host ::ng-deep .tabulator-tableholder::-webkit-scrollbar-thumb {
-    background: #d1d5db !important;
+    background: #d1d5db;
     border-radius: 4px;
 }
-
-:host ::ng-deep .tabulator-tableholder::-webkit-scrollbar-track {
-    background: transparent;
-}
-
 /* ================================
-   EXPANDED MODE ADJUSTMENTS
+   EXPANDED MODE
    ================================ */
 
 :host-context(.table-expanded) ::ng-deep .tabulator {
     height: calc(100vh - 120px) !important;
 }
 
+/* Hide expand button when table is expanded */
+:host-context(.table-expanded) .expand-button-container {
+    display: none;
+}
+
 /* ================================
-   EXPAND BUTTON (EMBEDDED IN TABLE)
+   EXPAND BUTTON (TOP RIGHT)
    ================================ */
 
-/* Ensure the expand button stays above table content */
 :host ::ng-deep .relative {
     position: relative;
 }
 
-/* Expand button positioning and style */
 .expand-button-container {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 10;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
 }
 
-/* Adjust table header to accommodate button */
-:host ::ng-deep .tabulator-header {
-    padding-right: 60px; /* Make room for expand button */
+.expand-table-btn {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
-/* Responsive: hide button label on small screens */
-@media (max-width: 768px) {
-    :host ::ng-deep .tabulator-header {
-        padding-right: 50px;
-    }
+.expand-table-btn:hover {
+    background-color: #f3f4f6 !important;
+}
+
+.expand-table-btn .pi {
+    font-size: 18px;
 }
 
 /* ================================
@@ -266,18 +201,6 @@
     position: fixed;
     transform: translateX(-50%);
     z-index: 1000;
-    animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
 }
 
 .floating-actions-content {
@@ -291,70 +214,44 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
-.selection-count {
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-    margin-right: 8px;
-    white-space: nowrap;
-}
-
-.action-buttons {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding-left: 12px;
-    border-left: 1px solid #e5e7eb;
-}
-
 .action-btn {
     width: 36px !important;
     height: 36px !important;
-    padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    color: #6b7280 !important;
     border-radius: 8px !important;
-    transition: all 0.2s ease !important;
 }
 
-.action-btn:hover {
+:host ::ng-deep .relative {
+    position: relative;
+}
+
+.expand-button-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
+}
+
+/* Smaller, subtle button */
+.expand-table-btn {
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.expand-table-btn:hover {
     background-color: #f3f4f6 !important;
-    color: #111827 !important;
 }
 
-.action-btn.delete-btn {
-    color: #ef4444 !important;
-}
-
-.action-btn.delete-btn:hover {
-    background-color: #fee2e2 !important;
-    color: #dc2626 !important;
-}
-
-/* Icon sizing */
-:host ::ng-deep .action-btn .pi {
-    font-size: 16px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .floating-actions-content {
-        padding: 10px 16px;
-        gap: 8px;
-    }
-    
-    .selection-count {
-        font-size: 13px;
-    }
-    
-    .action-btn {
-        width: 32px !important;
-        height: 32px !important;
-    }
-    
-    :host ::ng-deep .action-btn .pi {
-        font-size: 14px;
-    }
+.expand-table-btn .pi {
+    font-size: 15px;
 }

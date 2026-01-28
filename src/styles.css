@@ -1,3 +1,41 @@
+/* ===============================
+   Degular font registration
+   =============================== */
+
+@font-face {
+    font-family: 'Degular';
+    src: url('/assets/fonts/degular/Degular-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Degular';
+    src: url('/assets/fonts/degular/Degular-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Degular';
+    src: url('/assets/fonts/degular/Degular-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ===============================
+   Tailwind v4 (ONLY utilities)
+   =============================== */
+
+@tailwind utilities;
+
+/* ===============================
+   Global theme variables
+   =============================== */
+
 :root {
     --bg-page: #f9fafb;
     --bg-card: #ffffff;
@@ -12,4 +50,33 @@ html.dark {
     --text-primary: #f9fafb;
     --border-color: #374151;
     --input-bg: #020617;
+}
+
+/* ===============================
+   FORCE Degular globally (v4 fix)
+   =============================== */
+
+html,
+body,
+#app,
+#root {
+    font-family:
+        'Degular',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        Oxygen,
+        Ubuntu,
+        Cantarell,
+        'Helvetica Neue',
+        sans-serif;
+}
+
+/* PrimeNG override */
+.p-component {
+    font-family: inherit !important;
+}
+.p-component * {
+    font-family: inherit !important;
 }
