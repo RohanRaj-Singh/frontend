@@ -1,0 +1,9 @@
+.manual-color-container {
+    min-height: 100vh;
+    background-color: #f9fafb;
+}
+
+/* Ensure proper spacing */
+:host ::ng-deep app-tabulator-table {
+    display: block;
+}

@@ -65,6 +65,10 @@ export class TabulatorTableComponent implements OnInit {
     isExpanded: boolean = false;
     s3BucketName: string = '';
     s3FileName: string = '';
+    
+    // Floating action dialog
+    showFloatingActions: boolean = false;
+    floatingActionsPosition = { bottom: '20px', left: '50%' };
 
     constructor(
         private tabulatorService: TabulatorService,
@@ -149,6 +153,10 @@ export class TabulatorTableComponent implements OnInit {
                 const selectedData = rows.map((row: any) => row.getData());
                 this.selectedRows = selectedData;
                 this.rowSelected.emit(selectedData);
+                
+                // Show floating actions only in editable mode when rows are selected
+                this.showFloatingActions = (this.config.editable === true) && selectedData.length > 0;
+                
                 console.log('📊 Selected rows:', selectedData.length);
             });
         }
@@ -181,12 +189,17 @@ export class TabulatorTableComponent implements OnInit {
             {
                 title: '#',
                 field: 'rowNumber',
-                width: 60,
+                width: 80,
                 editor: false,
                 headerSort: false,
                 frozen: true,
-                hozAlign: 'center',
-                headerFilter: false
+                hozAlign: 'left',
+                headerFilter: false,
+                formatter: (cell: any) => {
+                    const data = cell.getData();
+                    // Support hierarchical numbering like "1.2.3" for parent/child
+                    return data.rowNumber || (cell.getRow().getPosition() + 1);
+                }
             },
             {
                 title: 'Message ID',
@@ -510,5 +523,105 @@ export class TabulatorTableComponent implements OnInit {
         return this.selectedRows.length > 0 
             ? `Export Selected (${this.selectedRows.length})` 
             : 'Export All';
+    }
+
+    // ==================== PARENT/CHILD HIERARCHY OPERATIONS ====================
+
+    /**
+     * Swap parent row with child row
+     */
+    swapParentChild() {
+        if (this.selectedRows.length !== 1) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Warning',
+                detail: 'Please select exactly one row to swap'
+            });
+            return;
+        }
+
+        console.log('🔄 Swapping parent with child for:', this.selectedRows[0]);
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Swap Operation',
+            detail: 'Parent/Child swap functionality - Implementation needed'
+        });
+        // TODO: Implement swap logic based on your data structure
+    }
+
+    /**
+     * Assign child row as parent
+     */
+    assignAsParent() {
+        if (this.selectedRows.length !== 1) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Warning',
+                detail: 'Please select exactly one row to assign as parent'
+            });
+            return;
+        }
+
+        console.log('⬆️ Assigning as parent:', this.selectedRows[0]);
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Assign as Parent',
+            detail: 'Row assigned as parent successfully'
+        });
+        // TODO: Implement assign as parent logic
+    }
+
+    /**
+     * Delete selected rows
+     */
+    deleteSelectedRowsFromFloating() {
+        if (this.selectedRows.length === 0) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Warning',
+                detail: 'No rows selected to delete'
+            });
+            return;
+        }
+
+        const count = this.selectedRows.length;
+        console.log('🗑️ Deleting selected rows:', count);
+        
+        // Delete from Tabulator
+        const selectedTabulatorRows = this.table.getSelectedRows();
+        selectedTabulatorRows.forEach((row: any) => row.delete());
+        
+        this.tableData = this.table.getData();
+        this.selectedRows = [];
+        this.showFloatingActions = false;
+        this.dataChanged.emit(this.tableData);
+        
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Deleted',
+            detail: `${count} row(s) deleted successfully`
+        });
+    }
+
+    /**
+     * Custom operation (placeholder for first icon)
+     */
+    customOperation() {
+        if (this.selectedRows.length === 0) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Warning',
+                detail: 'No rows selected'
+            });
+            return;
+        }
+
+        console.log('⚙️ Custom operation for:', this.selectedRows);
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Custom Operation',
+            detail: 'Custom operation - Implementation needed'
+        });
+        // TODO: Implement custom operation based on requirements
     }
 }

@@ -257,3 +257,104 @@
         padding-right: 50px;
     }
 }
+
+/* ================================
+   FLOATING ACTION DIALOG
+   ================================ */
+
+.floating-actions-dialog {
+    position: fixed;
+    transform: translateX(-50%);
+    z-index: 1000;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.floating-actions-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.selection-count {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 12px;
+    border-left: 1px solid #e5e7eb;
+}
+
+.action-btn {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #6b7280 !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+}
+
+.action-btn:hover {
+    background-color: #f3f4f6 !important;
+    color: #111827 !important;
+}
+
+.action-btn.delete-btn {
+    color: #ef4444 !important;
+}
+
+.action-btn.delete-btn:hover {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+}
+
+/* Icon sizing */
+:host ::ng-deep .action-btn .pi {
+    font-size: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .floating-actions-content {
+        padding: 10px 16px;
+        gap: 8px;
+    }
+    
+    .selection-count {
+        font-size: 13px;
+    }
+    
+    .action-btn {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
+    :host ::ng-deep .action-btn .pi {
+        font-size: 14px;
+    }
+}
