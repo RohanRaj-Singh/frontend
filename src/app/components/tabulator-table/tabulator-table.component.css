@@ -23,7 +23,7 @@
 }
 
 /* ================================
-   HEADER — PURE WHITE (FIXED)
+   HEADER
    ================================ */
 
 :host ::ng-deep .tabulator-header {
@@ -44,33 +44,6 @@
 
 :host ::ng-deep .tabulator-col:last-child {
     border-right: none;
-}
-
-/* ================================
-   SELECT BUTTON STYLING
-   ================================ */
-
-:host ::ng-deep .select-row-btn {
-    background-color: #ffffff;
-    color: #374151;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-:host ::ng-deep .select-row-btn:hover {
-    background-color: #f3f4f6;
-    border-color: #9ca3af;
-}
-
-:host ::ng-deep .tabulator-row.tabulator-selected .select-row-btn {
-    background-color: #1f2937;
-    color: #ffffff;
-    border-color: #1f2937;
 }
 
 /* ================================
@@ -114,22 +87,6 @@
     padding: 10px 12px;
 }
 
-:host ::ng-deep .tabulator-page {
-    border: 1px solid #d1d5db;
-    background-color: #ffffff;
-    color: #374151;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    cursor: pointer;
-}
-
-:host ::ng-deep .tabulator-page.active {
-    background-color: #111827;
-    color: #ffffff;
-    border-color: #111827;
-}
-
 /* ================================
    SCROLLBAR
    ================================ */
@@ -143,6 +100,7 @@
     background: #d1d5db;
     border-radius: 4px;
 }
+
 /* ================================
    EXPANDED MODE
    ================================ */
@@ -159,69 +117,6 @@
 /* ================================
    EXPAND BUTTON (TOP RIGHT)
    ================================ */
-
-:host ::ng-deep .relative {
-    position: relative;
-}
-
-.expand-button-container {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 20;
-}
-
-.expand-table-btn {
-    width: 44px !important;
-    height: 44px !important;
-    padding: 0 !important;
-    border-radius: 10px !important;
-    background: #ffffff !important;
-    border: 1px solid #d1d5db !important;
-    color: #374151 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-}
-
-.expand-table-btn:hover {
-    background-color: #f3f4f6 !important;
-}
-
-.expand-table-btn .pi {
-    font-size: 18px;
-}
-
-/* ================================
-   FLOATING ACTION DIALOG
-   ================================ */
-
-.floating-actions-dialog {
-    position: fixed;
-    transform: translateX(-50%);
-    z-index: 1000;
-}
-
-.floating-actions-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 12px 20px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.action-btn {
-    width: 36px !important;
-    height: 36px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 8px !important;
-}
 
 :host ::ng-deep .relative {
     position: relative;
@@ -252,6 +147,7 @@
     background-color: #f3f4f6 !important;
 }
 
+/* Icon size */
 .expand-table-btn .pi {
     font-size: 15px;
 }
