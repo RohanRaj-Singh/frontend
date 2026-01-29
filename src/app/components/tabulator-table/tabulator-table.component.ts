@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -31,7 +31,7 @@ export interface TableConfig {
     styleUrls: ['./tabulator-table.component.css'],
     providers: [MessageService]
 })
-export class TabulatorTableComponent implements OnInit {
+export class TabulatorTableComponent implements AfterViewInit {
     @ViewChild('tableContainer') tableContainer!: ElementRef;
 
     // Configuration inputs
@@ -63,6 +63,7 @@ export class TabulatorTableComponent implements OnInit {
     selectedRows: any[] = [];
     isLoading: boolean = false;
     isExpanded: boolean = false;
+    isInitialized: boolean = false; // Prevent duplicate initialization
     s3BucketName: string = '';
     s3FileName: string = '';
     
@@ -72,33 +73,81 @@ export class TabulatorTableComponent implements OnInit {
 
     constructor(
         private tabulatorService: TabulatorService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private cdr: ChangeDetectorRef
     ) {}
 
-    ngOnInit() {
-        console.log('🚀 Tabulator component initialized (Editable:', this.config.editable, ')');
-        this.initializeTable();
-        if (this.initialData && this.initialData.length > 0) {
-            this.loadTableData(this.initialData);
+    ngAfterViewInit() {
+        console.log('🚀 Tabulator component view initialized (Editable:', this.config.editable, ')');
+        
+        // Prevent duplicate initialization
+        if (this.isInitialized) {
+            console.log('⚠️ Already initialized, skipping');
+            return;
         }
+        
+        // Detect changes first to ensure DOM is updated
+        this.cdr.detectChanges();
+        
+        // Use multiple setTimeout approach for better reliability
+        setTimeout(() => {
+            const tableElement = document.getElementById('data-table');
+            
+            if (tableElement && tableElement.offsetParent !== null) {
+                // Element exists and is visible
+                this.initializeTable();
+                this.isInitialized = true;
+                
+                if (this.initialData && this.initialData.length > 0) {
+                    // Add another small delay before loading data
+                    setTimeout(() => {
+                        this.loadTableData(this.initialData);
+                    }, 100);
+                }
+            } else {
+                console.error('❌ Table element not ready or not visible');
+            }
+        }, 100);
     }
 
     /**
      * Initialize Tabulator table based on configuration
      */
     private initializeTable() {
+        // Check if DOM element exists and is visible
+        const tableElement = document.getElementById('data-table');
+        if (!tableElement) {
+            console.error('❌ Table element #data-table not found');
+            return;
+        }
+
+        // Check if element has dimensions (is rendered)
+        const rect = tableElement.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+            console.error('❌ Table element has no dimensions');
+            return;
+        }
+
+        console.log('✅ Table element ready:', rect.width, 'x', rect.height);
+
         // Use custom columns if provided, otherwise use defaults
         const tableColumns = this.columns.length > 0 ? this.columns : this.getDefaultColumns();
 
         // Configure columns based on editable mode
-        const configuredColumns = tableColumns.map((col) => ({
-            ...col,
-            editor: this.config.editable ? (col.editor !== undefined ? col.editor : 'input') : false,
-            editable: this.config.editable ? col.editable !== false : false,
-            resizable: true,
-            headerSort: col.headerSort !== false,
-            headerFilter: col.headerFilter // Use column-specific setting
-        }));
+        const configuredColumns = tableColumns.map((col) => {
+            // Never make select and rowNumber columns editable
+            const isNonEditableField = col.field === 'select' || col.field === 'rowNumber';
+            
+            return {
+                ...col,
+                editor: isNonEditableField ? false : 
+                       (this.config.editable ? 'input' : false),
+                editable: isNonEditableField ? false : this.config.editable,
+                resizable: true,
+                headerSort: col.headerSort !== false,
+                headerFilter: col.headerFilter // Use column-specific setting
+            };
+        });
 
         const tableConfig: any = {
             data: [],
@@ -131,7 +180,25 @@ export class TabulatorTableComponent implements OnInit {
             renderHorizontal: 'virtual'
         };
 
-        this.table = new Tabulator('#data-table', tableConfig);
+        try {
+            this.table = new Tabulator('#data-table', tableConfig);
+            console.log('✅ Tabulator initialized successfully');
+            
+            // Wait for table to be fully built before returning
+            this.table.on('tableBuilt', () => {
+                console.log('✅ Tabulator table built and ready');
+            });
+            
+        } catch (error) {
+            console.error('❌ Error initializing Tabulator:', error);
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to initialize table'
+            });
+            this.isInitialized = false; // Reset flag on error
+            return;
+        }
 
         // Event listeners
         if (this.config.editable) {
@@ -160,8 +227,6 @@ export class TabulatorTableComponent implements OnInit {
                 console.log('📊 Selected rows:', selectedData.length);
             });
         }
-
-        console.log('✅ Tabulator initialized');
     }
     
     /**
@@ -189,16 +254,16 @@ export class TabulatorTableComponent implements OnInit {
             {
                 title: '#',
                 field: 'rowNumber',
-                width: 80,
+                width: 60,
                 editor: false,
                 headerSort: false,
                 frozen: true,
-                hozAlign: 'left',
+                hozAlign: 'center',
                 headerFilter: false,
                 formatter: (cell: any) => {
                     const data = cell.getData();
-                    // Support hierarchical numbering like "1.2.3" for parent/child
-                    return data.rowNumber || (cell.getRow().getPosition() + 1);
+                    // Display hierarchical number but editable rows use simple numbering
+                    return data.hierarchyNumber || data.rowNumber || (cell.getRow().getPosition() + 1);
                 }
             },
             {
@@ -364,8 +429,13 @@ export class TabulatorTableComponent implements OnInit {
      * Load data into table with row numbers
      */
     private loadTableData(data: any[]) {
+        if (!this.table) {
+            console.warn('⚠️ Table not initialized yet, data will be loaded after initialization');
+            return;
+        }
+
         const dataWithRowNumbers = data.map((row, index) => ({
-            rowNumber: index + 1,
+            rowNumber: row.rowNumber || String(index + 1),
             ...row
         }));
 
@@ -572,7 +642,7 @@ export class TabulatorTableComponent implements OnInit {
     }
 
     /**
-     * Delete selected rows
+     * Delete selected rows (and their children if parent)
      */
     deleteSelectedRowsFromFloating() {
         if (this.selectedRows.length === 0) {
@@ -587,9 +657,46 @@ export class TabulatorTableComponent implements OnInit {
         const count = this.selectedRows.length;
         console.log('🗑️ Deleting selected rows:', count);
         
+        // Collect all rows to delete (including children of parents)
+        const rowsToDelete = new Set<string>();
+        
+        this.selectedRows.forEach((selectedRow) => {
+            // Add the selected row itself
+            rowsToDelete.add(selectedRow.messageId);
+            
+            // If it's a parent, add all its children
+            if (selectedRow.isParent && selectedRow.childrenCount > 0) {
+                const parentRowNum = selectedRow.rowNumber;
+                
+                // Find all children with this parent
+                this.tableData.forEach((row) => {
+                    if (row.parentRow === parentRowNum) {
+                        rowsToDelete.add(row.messageId);
+                        
+                        // If child is also a parent (nested), find its children
+                        if (row.isParent && row.childrenCount > 0) {
+                            const childParentRowNum = row.rowNumber;
+                            this.tableData.forEach((nestedRow) => {
+                                if (nestedRow.parentRow === childParentRowNum) {
+                                    rowsToDelete.add(nestedRow.messageId);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        
+        console.log('🗑️ Total rows to delete (including children):', rowsToDelete.size);
+        
         // Delete from Tabulator
-        const selectedTabulatorRows = this.table.getSelectedRows();
-        selectedTabulatorRows.forEach((row: any) => row.delete());
+        const allRows = this.table.getRows();
+        allRows.forEach((row: any) => {
+            const rowData = row.getData();
+            if (rowsToDelete.has(rowData.messageId)) {
+                row.delete();
+            }
+        });
         
         this.tableData = this.table.getData();
         this.selectedRows = [];
@@ -599,7 +706,7 @@ export class TabulatorTableComponent implements OnInit {
         this.messageService.add({
             severity: 'success',
             summary: 'Deleted',
-            detail: `${count} row(s) deleted successfully`
+            detail: `${rowsToDelete.size} row(s) deleted successfully`
         });
     }
 

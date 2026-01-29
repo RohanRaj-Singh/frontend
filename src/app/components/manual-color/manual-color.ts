@@ -12,7 +12,8 @@ import { TabulatorTableComponent, TableConfig } from '../tabulator-table/tabulat
 declare var XLSX: any;
 
 interface ColorData {
-  rowNumber?: string;        // Added for parent/child hierarchy
+  rowNumber?: string;        // Sequential number (1,2,3,4...)
+  hierarchyNumber?: string;  // Display number showing hierarchy (1, 2, 3 for parents; indented for children)
   messageId: string;
   tickerId: string;          // Changed from ticketId to match table
   cusip: string;
@@ -49,6 +50,7 @@ export class ManualColor implements OnInit {
   showImportDialog = false;
 
   // Main data array with parent/child hierarchy support
+  // Row numbering: Parents have simple numbers, children increment within parent
   colors: ColorData[] = [
     // ========== PARENT 1 with 3 children ==========
     { 
@@ -66,7 +68,7 @@ export class ManualColor implements OnInit {
       childrenCount: 3
     },
     { 
-      rowNumber: '1.1',
+      rowNumber: '1', // Child row number (will be indented or visually shown as child)
       messageId: 'TRB5829340A63B92', 
       tickerId: 'BESXP15 12X A1', 
       cusip: '961644AC4', 
@@ -80,7 +82,7 @@ export class ManualColor implements OnInit {
       parentRow: '1'
     },
     { 
-      rowNumber: '1.2',
+      rowNumber: '2', // Child row continues numbering
       messageId: 'TRB5829340A63B93', 
       tickerId: 'BESXP15 12X A1', 
       cusip: '961644AC4', 
@@ -94,7 +96,7 @@ export class ManualColor implements OnInit {
       parentRow: '1'
     },
     { 
-      rowNumber: '1.3',
+      rowNumber: '3',
       messageId: 'TRB5829340A63B94', 
       tickerId: 'BESXP15 12X A1', 
       cusip: '961644AC4', 
@@ -110,7 +112,7 @@ export class ManualColor implements OnInit {
     
     // ========== PARENT 2 with no children ==========
     { 
-      rowNumber: '2',
+      rowNumber: '4',
       messageId: 'TRB5829340A63B95', 
       tickerId: 'BESXP15 15Y A2', 
       cusip: '961644AC5', 
@@ -126,7 +128,7 @@ export class ManualColor implements OnInit {
     
     // ========== PARENT 3 with 2 children, one nested ==========
     { 
-      rowNumber: '3',
+      rowNumber: '5',
       messageId: 'TRB5829340A63B96', 
       tickerId: 'JPMORGAN 20A At', 
       cusip: '46625HKL3', 
@@ -140,7 +142,7 @@ export class ManualColor implements OnInit {
       childrenCount: 2
     },
     { 
-      rowNumber: '3.1',
+      rowNumber: '6',
       messageId: 'TRB5829340A63B97', 
       tickerId: 'JPMORGAN 20A At', 
       cusip: '46625HKL3', 
@@ -151,10 +153,10 @@ export class ManualColor implements OnInit {
       ask: '104.1', 
       source: 'Bid',
       isParent: false,
-      parentRow: '3'
+      parentRow: '5'
     },
     { 
-      rowNumber: '3.2',
+      rowNumber: '7',
       messageId: 'TRB5829340A63B98', 
       tickerId: 'JPMORGAN 20A At', 
       cusip: '46625HKL3', 
@@ -166,10 +168,10 @@ export class ManualColor implements OnInit {
       source: 'Ask',
       isParent: true,  // This child has its own children
       childrenCount: 2,
-      parentRow: '3'
+      parentRow: '5'
     },
     { 
-      rowNumber: '3.2.1',
+      rowNumber: '8',
       messageId: 'TRB5829340A63B99', 
       tickerId: 'JPMORGAN 20A At', 
       cusip: '46625HKL3', 
@@ -180,10 +182,10 @@ export class ManualColor implements OnInit {
       ask: '104.3', 
       source: 'BWIC Talk',
       isParent: false,
-      parentRow: '3.2'
+      parentRow: '7'
     },
     { 
-      rowNumber: '3.2.2',
+      rowNumber: '9',
       messageId: 'TRB5829340A63BA0', 
       tickerId: 'JPMORGAN 20A At', 
       cusip: '46625HKL3', 
@@ -194,12 +196,12 @@ export class ManualColor implements OnInit {
       ask: '104.4', 
       source: 'Color',
       isParent: false,
-      parentRow: '3.2'
+      parentRow: '7'
     },
     
     // ========== PARENT 4 with 4 children ==========
     { 
-      rowNumber: '4',
+      rowNumber: '10',
       messageId: 'TRB5829340A63BA1', 
       tickerId: 'WELLS FARGO 25B Ai', 
       cusip: '949763DF2', 
@@ -213,7 +215,7 @@ export class ManualColor implements OnInit {
       childrenCount: 4
     },
     { 
-      rowNumber: '4.1',
+      rowNumber: '11',
       messageId: 'TRB5829340A63BA2', 
       tickerId: 'WELLS FARGO 25B Ai', 
       cusip: '949763DF2', 
@@ -224,10 +226,10 @@ export class ManualColor implements OnInit {
       ask: '100.1', 
       source: 'Bid',
       isParent: false,
-      parentRow: '4'
+      parentRow: '10'
     },
     { 
-      rowNumber: '4.2',
+      rowNumber: '12',
       messageId: 'TRB5829340A63BA3', 
       tickerId: 'WELLS FARGO 25B Ai', 
       cusip: '949763DF2', 
@@ -238,10 +240,10 @@ export class ManualColor implements OnInit {
       ask: '100.2', 
       source: 'Offer',
       isParent: false,
-      parentRow: '4'
+      parentRow: '10'
     },
     { 
-      rowNumber: '4.3',
+      rowNumber: '13',
       messageId: 'TRB5829340A63BA4', 
       tickerId: 'WELLS FARGO 25B Ai', 
       cusip: '949763DF2', 
@@ -252,10 +254,10 @@ export class ManualColor implements OnInit {
       ask: '100.3', 
       source: 'Ask',
       isParent: false,
-      parentRow: '4'
+      parentRow: '10'
     },
     { 
-      rowNumber: '4.4',
+      rowNumber: '14',
       messageId: 'TRB5829340A63BA5', 
       tickerId: 'WELLS FARGO 25B Ai', 
       cusip: '949763DF2', 
@@ -266,12 +268,12 @@ export class ManualColor implements OnInit {
       ask: '100.4', 
       source: 'BWIC Cover',
       isParent: false,
-      parentRow: '4'
+      parentRow: '10'
     },
     
     // ========== PARENT 5 with 1 child ==========
     { 
-      rowNumber: '5',
+      rowNumber: '15',
       messageId: 'TRB5829340A63BA6', 
       tickerId: 'CITIGROUP 30C Ak', 
       cusip: '172967LD5', 
@@ -285,7 +287,7 @@ export class ManualColor implements OnInit {
       childrenCount: 1
     },
     { 
-      rowNumber: '5.1',
+      rowNumber: '16',
       messageId: 'TRB5829340A63BA7', 
       tickerId: 'CITIGROUP 30C Ak', 
       cusip: '172967LD5', 
@@ -296,12 +298,12 @@ export class ManualColor implements OnInit {
       ask: '103.6', 
       source: 'Offer',
       isParent: false,
-      parentRow: '5'
+      parentRow: '15'
     },
     
     // ========== PARENT 6 with no children ==========
     { 
-      rowNumber: '6',
+      rowNumber: '17',
       messageId: 'TRB5829340A63BA8', 
       tickerId: 'BANK OF AMERICA 35D Al', 
       cusip: '06051GHE6', 
@@ -317,7 +319,7 @@ export class ManualColor implements OnInit {
     
     // ========== PARENT 7 with 5 children ==========
     { 
-      rowNumber: '7',
+      rowNumber: '18',
       messageId: 'TRB5829340A63BA9', 
       tickerId: 'GOLDMAN SACHS 40E Am', 
       cusip: '38141GKL8', 
@@ -331,7 +333,7 @@ export class ManualColor implements OnInit {
       childrenCount: 5
     },
     { 
-      rowNumber: '7.1',
+      rowNumber: '19',
       messageId: 'TRB5829340A63BB0', 
       tickerId: 'GOLDMAN SACHS 40E Am', 
       cusip: '38141GKL8', 
@@ -342,10 +344,10 @@ export class ManualColor implements OnInit {
       ask: '105.1', 
       source: 'Bid',
       isParent: false,
-      parentRow: '7'
+      parentRow: '18'
     },
     { 
-      rowNumber: '7.2',
+      rowNumber: '20',
       messageId: 'TRB5829340A63BB1', 
       tickerId: 'GOLDMAN SACHS 40E Am', 
       cusip: '38141GKL8', 
@@ -356,10 +358,10 @@ export class ManualColor implements OnInit {
       ask: '105.2', 
       source: 'Ask',
       isParent: false,
-      parentRow: '7'
+      parentRow: '18'
     },
     { 
-      rowNumber: '7.3',
+      rowNumber: '21',
       messageId: 'TRB5829340A63BB2', 
       tickerId: 'GOLDMAN SACHS 40E Am', 
       cusip: '38141GKL8', 
@@ -370,10 +372,10 @@ export class ManualColor implements OnInit {
       ask: '105.3', 
       source: 'Offer',
       isParent: false,
-      parentRow: '7'
+      parentRow: '18'
     },
     { 
-      rowNumber: '7.4',
+      rowNumber: '22',
       messageId: 'TRB5829340A63BB3', 
       tickerId: 'GOLDMAN SACHS 40E Am', 
       cusip: '38141GKL8', 
@@ -384,10 +386,10 @@ export class ManualColor implements OnInit {
       ask: '105.4', 
       source: 'Market',
       isParent: false,
-      parentRow: '7'
+      parentRow: '18'
     },
     { 
-      rowNumber: '7.5',
+      rowNumber: '23',
       messageId: 'TRB5829340A63BB4', 
       tickerId: 'GOLDMAN SACHS 40E Am', 
       cusip: '38141GKL8', 
@@ -398,7 +400,7 @@ export class ManualColor implements OnInit {
       ask: '105.5', 
       source: 'Color',
       isParent: false,
-      parentRow: '7'
+      parentRow: '18'
     }
   ];
 

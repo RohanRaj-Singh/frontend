@@ -37,6 +37,11 @@ export class AppMenu {
             disabled: true,
             title: 'Coming Soon'
           },
+          {
+            label: 'Manual Color',
+            icon: 'pi pi-fw pi-palette',
+            routerLink: ['/manual-color']
+          },
         ]
       },
 
