@@ -64,7 +64,13 @@
                             <div class="bg-white rounded-[18px] overflow-hidden shadow-sm">
                                 <button pButton icon="pi pi-upload" label="Import Sample" (click)="importSample()" class="w-full !bg-white !text-gray-700 hover:!bg-gray-50 !rounded-none !border-b !border-gray-100 !py-4 justify-start"></button>
 
-                                <button pButton icon="pi pi-sliders-h" label="Rules & Presets" (click)="rulesAndPresets()" class="w-full !bg-white !text-gray-700 hover:!bg-gray-50 !rounded-none !border-b !border-gray-100 !py-4 justify-start"></button>
+                                <button
+                                    pButton
+                                    icon="pi pi-sliders-h"
+                                    label="Rules & Presets"
+                                    (click)="rulesAndPresets()"
+                                    class="w-full !bg-white !text-gray-700 hover:!bg-gray-50 !rounded-none !border-b !border-gray-100 !py-4 justify-start"
+                                ></button>
 
                                 <button pButton icon="pi pi-history" label="Restore last run" (click)="restoreLastRun()" class="w-full !bg-white !text-gray-700 hover:!bg-gray-50 !rounded-none !border-b !border-gray-100 !py-4 justify-start"></button>
 
@@ -142,12 +148,12 @@
         </div>
 
         <!-- ================= TABULATOR TABLE ================= -->
-        <app-tabulator-table 
-            [config]="tabulatorConfig" 
+        <app-tabulator-table
+            [config]="tabulatorConfig"
             [initialData]="tableData"
             [showExpandButton]="true"
-            (dataChanged)="onTableDataChanged($event)" 
-            (dataLoaded)="onTableDataLoaded($event)" 
+            (dataChanged)="onTableDataChanged($event)"
+            (dataLoaded)="onTableDataLoaded($event)"
             (rowSelected)="onTableRowSelected($event)"
             (expandToggled)="onTableExpandToggled($event)"
         ></app-tabulator-table>
@@ -155,35 +161,93 @@
 
     <!-- ================= EXPANDED TABLE VIEW ================= -->
     <div *ngIf="isTableExpanded" class="fixed inset-0 bg-white z-40 flex flex-col" [ngStyle]="{'padding-top': '64px', 'padding-left': '0px'}">
-        <!-- BACK BUTTON & HEADER -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
-            <div class="flex items-center gap-4">
-                <button 
-                    pButton 
-                    icon="pi pi-arrow-left" 
-                    label="Back to Dashboard"
-                    class="!bg-gray-900 !text-white !rounded-full !px-5 !py-2.5 hover:!bg-black" 
-                    (click)="toggleTableExpansion()"
-                ></button>
-                
-                <h2 class="text-lg font-semibold text-gray-900">Market Pulse Data - Full Screen View</h2>
-            </div>
+        <!-- ONLY MINIMIZE BUTTON AT TOP-RIGHT (NO HEADER) -->
+        <div class="absolute top-6 right-6 z-50">
+            <button
+                pButton
+                icon="pi pi-compress"
+                class="minimize-table-btn !bg-gray-900 !text-white hover:!bg-black !border !border-gray-900 !w-10 !h-10 !p-0 !rounded-lg"
+                (click)="toggleTableExpansion()"
+                pTooltip="Minimize table"
+                tooltipPosition="left"
+            ></button>
+        </div>
 
-            <!-- Selection Info in Expanded View -->
-            <div *ngIf="selectedRows.length > 0" class="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full">
-                <i class="pi pi-check-circle text-blue-600"></i>
-                <span class="text-sm font-medium text-blue-700">{{ selectedRows.length }} row(s) selected</span>
+        <!-- SEARCH / FILTERS BAR IN EXPANDED VIEW (at top) -->
+        <div class="bg-white border-b border-gray-200 p-5">
+            <div class="max-w-[1800px] mx-auto">
+                <!-- Top Controls -->
+                <div class="flex flex-col sm:flex-row flex-wrap items-center gap-4">
+                    <!-- Search -->
+                    <div class="relative w-full sm:w-64">
+                        <input pInputText type="text" placeholder="Search Message ID" class="w-full !rounded-full !px-5 !py-2.5 !bg-gray-50 !text-gray-700 !border !border-gray-300 hover:!bg-gray-100" />
+                        <i class="pi pi-search absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                    </div>
+
+                    <!-- Filters & Import -->
+                    <div class="flex flex-wrap gap-3">
+                        <button pButton icon="pi pi-filter" label="Filters" (click)="showFilterDialog()" class="!rounded-full !px-5 !py-2.5 !bg-gray-50 !text-gray-700 !border !border-gray-300 hover:!bg-gray-100"></button>
+
+                        <button pButton icon="pi pi-download" label="Import ID via Excel" (click)="importViaExcel()" class="!rounded-full !px-5 !py-2.5 !bg-gray-50 !text-gray-700 !border !border-gray-300 hover:!bg-gray-100"></button>
+                    </div>
+
+                    <!-- Spacer -->
+                    <div class="flex-1"></div>
+
+                    <!-- Export / Count / Fetch -->
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <!-- Export - Dynamic label -->
+                        <button pButton icon="pi pi-download" [label]="getExportButtonLabel()" (click)="exportAll()" class="!rounded-full !px-5 !py-2.5 !bg-gray-50 !text-gray-700 !border !border-gray-300 hover:!bg-gray-100"></button>
+
+                        <!-- Total Count -->
+                        <div class="flex items-center gap-3 px-5 py-2.5 rounded-full border border-gray-300 bg-gray-50 text-gray-700 font-medium">
+                            <span>Total Count</span>
+                            <span class="px-3 py-0.5 bg-white rounded-full shadow text-sm font-semibold"> {{ tableData.length }} </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Filters -->
+                <div class="flex flex-wrap items-center gap-3 mt-5">
+                    <!-- Filter Chip -->
+                    <div class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-gray-100 text-gray-900 border border-gray-200">
+                        <i class="pi pi-filter text-gray-700"></i>
+                        <span class="text-sm font-medium whitespace-nowrap"> Color : Bwic Cover | Px : Less than 100 </span>
+                        <button class="text-red-500 hover:text-red-600" aria-label="Remove filter">
+                            <i class="pi pi-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- Another Filter Chip -->
+                    <div class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-gray-100 text-gray-900 border border-gray-200">
+                        <i class="pi pi-filter text-gray-700"></i>
+                        <span class="text-sm font-medium whitespace-nowrap"> Color : Market | Date : Today </span>
+                        <button class="text-red-500 hover:text-red-600" aria-label="Remove filter">
+                            <i class="pi pi-times"></i>
+                        </button>
+                    </div>
+
+                    <button class="flex items-center gap-2 !rounded-full !px-5 !py-2.5 !bg-white !text-gray-700 !border !border-gray-300 hover:!bg-gray-50" (click)="removeAllFilters()">
+                        <i class="pi pi-trash text-sm"></i>
+                        Remove all filters
+                    </button>
+
+                    <div class="flex-1"></div>
+
+                    <!-- Fetch -->
+                    <button pButton label="Fetch Data" (click)="fetchData()" class="!bg-gray-900 !text-white !rounded-full !px-5 !py-2.5 text-sm font-medium hover:!bg-black"></button>
+                </div>
             </div>
         </div>
 
         <!-- TABLE IN EXPANDED MODE -->
         <div class="flex-1 overflow-auto px-6 py-4">
-            <app-tabulator-table 
-                [config]="tabulatorConfig" 
+            <app-tabulator-table
+                [config]="tabulatorConfig"
                 [initialData]="tableData"
-                [showExpandButton]="true"
-                (dataChanged)="onTableDataChanged($event)" 
-                (dataLoaded)="onTableDataLoaded($event)" 
+                [showExpandButton]="false"
+                (dataChanged)="onTableDataChanged($event)"
+                (dataLoaded)="onTableDataLoaded($event)"
                 (rowSelected)="onTableRowSelected($event)"
                 (expandToggled)="onTableExpandToggled($event)"
             ></app-tabulator-table>

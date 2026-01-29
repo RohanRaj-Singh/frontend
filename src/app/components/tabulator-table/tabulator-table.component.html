@@ -1,7 +1,4 @@
 <div class="space-y-4">
-    <!-- TOAST NOTIFICATIONS -->
-    <p-toast position="top-right"></p-toast>
-
     <!-- Top Toolbar - Only show selection info, not expand button -->
     <div class="flex flex-wrap items-center justify-between gap-3" *ngIf="selectedRows.length > 0 || config.editable">
         <!-- Left Side - Selection Info -->
@@ -42,10 +39,22 @@
 
     <!-- TABLE CONTAINER with embedded expand button -->
     <div class="relative">
-        <!-- Expand Button (top-right of table) -->
-        <!-- Expand Button (top-right of table, hidden when expanded) -->
-        <div class="expand-button-container" *ngIf="showExpandButton && !isExpanded">
-            <button pButton icon="pi pi-expand" class="expand-table-btn" (click)="toggleExpand()" pTooltip="Expand table to full screen" tooltipPosition="left"></button>
+        <!-- Expand Button (top-right of table) - Only show when NOT in expanded mode -->
+        <!-- Expand / Minimize Button (top-right of table) -->
+        <div class="expand-button-container" *ngIf="showExpandButton">
+            <!-- Expand -->
+            <button
+                *ngIf="!isExpanded"
+                pButton
+                icon="pi pi-expand"
+                class="expand-table-btn !bg-white !text-gray-700 hover:!bg-gray-100 !border !border-gray-300"
+                (click)="toggleExpand()"
+                pTooltip="Expand table to full screen"
+                tooltipPosition="left"
+            ></button>
+
+            <!-- Minimize -->
+            <button *ngIf="isExpanded" pButton icon="pi pi-compress" class="expand-table-btn !bg-white !text-gray-700 hover:!bg-gray-100 !border !border-gray-300" (click)="toggleExpand()" pTooltip="Minimize table" tooltipPosition="left"></button>
         </div>
 
         <!-- Tabulator -->

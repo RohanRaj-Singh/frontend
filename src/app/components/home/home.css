@@ -1,4 +1,4 @@
-/* Custom styles for the filter dialog @Home.css*/ 
+/* Custom styles for the filter dialog @Home.css*/
 :host ::ng-deep .filter-dialog .p-dialog-header {
     padding: 1rem 1.5rem;
     border-bottom: 1px solid #e5e7eb;
@@ -8,6 +8,36 @@
     padding: 1.5rem;
 }
 
+/* Minimize button styling in expanded view */
+.minimize-table-btn {
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.minimize-table-btn:hover {
+    background-color: #f3f4f6 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.minimize-table-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.minimize-table-btn .pi-compress {
+    font-size: 14px;
+}
 :host ::ng-deep .filter-dialog .p-autocomplete {
     width: 100%;
 }

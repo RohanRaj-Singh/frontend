@@ -66,7 +66,7 @@ export class TabulatorTableComponent implements AfterViewInit {
     isInitialized: boolean = false; // Prevent duplicate initialization
     s3BucketName: string = '';
     s3FileName: string = '';
-    
+
     // Floating action dialog
     showFloatingActions: boolean = false;
     floatingActionsPosition = { bottom: '20px', left: '50%' };
@@ -79,25 +79,25 @@ export class TabulatorTableComponent implements AfterViewInit {
 
     ngAfterViewInit() {
         console.log('🚀 Tabulator component view initialized (Editable:', this.config.editable, ')');
-        
+
         // Prevent duplicate initialization
         if (this.isInitialized) {
             console.log('⚠️ Already initialized, skipping');
             return;
         }
-        
+
         // Detect changes first to ensure DOM is updated
         this.cdr.detectChanges();
-        
+
         // Use multiple setTimeout approach for better reliability
         setTimeout(() => {
             const tableElement = document.getElementById('data-table');
-            
+
             if (tableElement && tableElement.offsetParent !== null) {
                 // Element exists and is visible
                 this.initializeTable();
                 this.isInitialized = true;
-                
+
                 if (this.initialData && this.initialData.length > 0) {
                     // Add another small delay before loading data
                     setTimeout(() => {
@@ -137,11 +137,10 @@ export class TabulatorTableComponent implements AfterViewInit {
         const configuredColumns = tableColumns.map((col) => {
             // Never make select and rowNumber columns editable
             const isNonEditableField = col.field === 'select' || col.field === 'rowNumber';
-            
+
             return {
                 ...col,
-                editor: isNonEditableField ? false : 
-                       (this.config.editable ? 'input' : false),
+                editor: isNonEditableField ? false : this.config.editable ? 'input' : false,
                 editable: isNonEditableField ? false : this.config.editable,
                 resizable: true,
                 headerSort: col.headerSort !== false,
@@ -172,8 +171,8 @@ export class TabulatorTableComponent implements AfterViewInit {
 
             history: this.config.editable,
 
-            // Height
-            height: this.isExpanded ? 'calc(100vh - 120px)' : '600px',
+            // Height - dynamic based on expanded state
+            height: this.isExpanded ? 'calc(100vh - 220px)' : '600px',
 
             // Virtual rendering for performance
             renderVertical: 'virtual',
@@ -183,12 +182,11 @@ export class TabulatorTableComponent implements AfterViewInit {
         try {
             this.table = new Tabulator('#data-table', tableConfig);
             console.log('✅ Tabulator initialized successfully');
-            
+
             // Wait for table to be fully built before returning
             this.table.on('tableBuilt', () => {
                 console.log('✅ Tabulator table built and ready');
             });
-            
         } catch (error) {
             console.error('❌ Error initializing Tabulator:', error);
             this.messageService.add({
@@ -220,15 +218,15 @@ export class TabulatorTableComponent implements AfterViewInit {
                 const selectedData = rows.map((row: any) => row.getData());
                 this.selectedRows = selectedData;
                 this.rowSelected.emit(selectedData);
-                
+
                 // Show floating actions only in editable mode when rows are selected
-                this.showFloatingActions = (this.config.editable === true) && selectedData.length > 0;
-                
+                this.showFloatingActions = this.config.editable === true && selectedData.length > 0;
+
                 console.log('📊 Selected rows:', selectedData.length);
             });
         }
     }
-    
+
     /**
      * Get default columns for the table
      */
@@ -263,7 +261,7 @@ export class TabulatorTableComponent implements AfterViewInit {
                 formatter: (cell: any) => {
                     const data = cell.getData();
                     // Display hierarchical number but editable rows use simple numbering
-                    return data.hierarchyNumber || data.rowNumber || (cell.getRow().getPosition() + 1);
+                    return data.hierarchyNumber || data.rowNumber || cell.getRow().getPosition() + 1;
                 }
             },
             {
@@ -325,22 +323,6 @@ export class TabulatorTableComponent implements AfterViewInit {
                 headerFilter: false
             }
         ];
-    }
-
-    /**
-     * Toggle expand/collapse table
-     */
-    toggleExpand() {
-        this.isExpanded = !this.isExpanded;
-        this.expandToggled.emit(this.isExpanded);
-        
-        // Update table height
-        if (this.table) {
-            const newHeight = this.isExpanded ? 'calc(100vh - 120px)' : '600px';
-            this.table.setHeight(newHeight);
-        }
-        
-        console.log('🔄 Table expansion toggled:', this.isExpanded);
     }
 
     /**
@@ -449,7 +431,7 @@ export class TabulatorTableComponent implements AfterViewInit {
      */
     exportToCSV() {
         const dataToExport = this.selectedRows.length > 0 ? this.selectedRows : this.table.getData();
-        
+
         if (dataToExport.length === 0) {
             this.messageService.add({
                 severity: 'warn',
@@ -458,10 +440,10 @@ export class TabulatorTableComponent implements AfterViewInit {
             });
             return;
         }
-        
+
         const fileName = this.selectedRows.length > 0 ? 'selected-rows' : 'table-data';
         this.tabulatorService.exportToCSV(dataToExport, fileName);
-        
+
         this.messageService.add({
             severity: 'success',
             summary: 'Success',
@@ -474,7 +456,7 @@ export class TabulatorTableComponent implements AfterViewInit {
      */
     exportToExcel() {
         const dataToExport = this.selectedRows.length > 0 ? this.selectedRows : this.table.getData();
-        
+
         if (dataToExport.length === 0) {
             this.messageService.add({
                 severity: 'warn',
@@ -483,10 +465,10 @@ export class TabulatorTableComponent implements AfterViewInit {
             });
             return;
         }
-        
+
         const fileName = this.selectedRows.length > 0 ? 'selected-rows' : 'table-data';
         this.tabulatorService.exportToExcel(dataToExport, fileName);
-        
+
         this.messageService.add({
             severity: 'success',
             summary: 'Success',
@@ -590,9 +572,7 @@ export class TabulatorTableComponent implements AfterViewInit {
      * Get export button label
      */
     getExportLabel(): string {
-        return this.selectedRows.length > 0 
-            ? `Export Selected (${this.selectedRows.length})` 
-            : 'Export All';
+        return this.selectedRows.length > 0 ? `Export Selected (${this.selectedRows.length})` : 'Export All';
     }
 
     // ==================== PARENT/CHILD HIERARCHY OPERATIONS ====================
@@ -656,23 +636,23 @@ export class TabulatorTableComponent implements AfterViewInit {
 
         const count = this.selectedRows.length;
         console.log('🗑️ Deleting selected rows:', count);
-        
+
         // Collect all rows to delete (including children of parents)
         const rowsToDelete = new Set<string>();
-        
+
         this.selectedRows.forEach((selectedRow) => {
             // Add the selected row itself
             rowsToDelete.add(selectedRow.messageId);
-            
+
             // If it's a parent, add all its children
             if (selectedRow.isParent && selectedRow.childrenCount > 0) {
                 const parentRowNum = selectedRow.rowNumber;
-                
+
                 // Find all children with this parent
                 this.tableData.forEach((row) => {
                     if (row.parentRow === parentRowNum) {
                         rowsToDelete.add(row.messageId);
-                        
+
                         // If child is also a parent (nested), find its children
                         if (row.isParent && row.childrenCount > 0) {
                             const childParentRowNum = row.rowNumber;
@@ -686,9 +666,9 @@ export class TabulatorTableComponent implements AfterViewInit {
                 });
             }
         });
-        
+
         console.log('🗑️ Total rows to delete (including children):', rowsToDelete.size);
-        
+
         // Delete from Tabulator
         const allRows = this.table.getRows();
         allRows.forEach((row: any) => {
@@ -697,12 +677,12 @@ export class TabulatorTableComponent implements AfterViewInit {
                 row.delete();
             }
         });
-        
+
         this.tableData = this.table.getData();
         this.selectedRows = [];
         this.showFloatingActions = false;
         this.dataChanged.emit(this.tableData);
-        
+
         this.messageService.add({
             severity: 'success',
             summary: 'Deleted',
@@ -710,6 +690,23 @@ export class TabulatorTableComponent implements AfterViewInit {
         });
     }
 
+    toggleExpand() {
+        this.isExpanded = !this.isExpanded;
+        this.expandToggled.emit(this.isExpanded);
+
+        // Update table height
+        if (this.table) {
+            const newHeight = this.isExpanded ? 'calc(100vh - 220px)' : '600px';
+            this.table.setHeight(newHeight);
+
+            // Redraw table to ensure proper rendering
+            setTimeout(() => {
+                this.table.redraw(true);
+            }, 50);
+        }
+
+        console.log('🔄 Table expansion toggled:', this.isExpanded ? 'Expanded' : 'Minimized');
+    }
     /**
      * Custom operation (placeholder for first icon)
      */

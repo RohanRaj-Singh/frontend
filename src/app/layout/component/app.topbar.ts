@@ -20,7 +20,6 @@ import { filter, Subscription } from 'rxjs';
             <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
             <i class="pi pi-bars"></i>
             </button>
-            <img src="./assets/logo/logo2.png" alt="Logo" class="layout-topbar-logo-image">
                 <!-- Brand -->
                 <div class="flex flex-col leading-tight">
                     <span class="font-bold whitespace-nowrap">
