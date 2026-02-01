@@ -21,12 +21,7 @@ import { StackedChartComponent } from '../stacked-chart/stacked-chart.component'
 @Component({
     selector: 'app-home',
     standalone: true,
-    imports: [
-        CommonModule, CardModule, ChartModule, TableModule, ChipModule, 
-        ButtonModule, InputTextModule, BadgeModule, DialogModule, 
-        StackedChartComponent, AutoCompleteModule, FormsModule, 
-        TooltipModule, TabulatorTableComponent, ToastModule
-    ],
+    imports: [CommonModule, CardModule, ChartModule, TableModule, ChipModule, ButtonModule, InputTextModule, BadgeModule, DialogModule, StackedChartComponent, AutoCompleteModule, FormsModule, TooltipModule, TabulatorTableComponent, ToastModule],
     templateUrl: './home.html',
     styleUrls: ['./home.css'],
     providers: [MessageService]
@@ -90,7 +85,7 @@ export class Home implements OnInit {
         this.loadDataFromBackend();
         this.loadAvailableSectors();
         this.loadOutputStats();
-        
+
         // Initialize filtered options with all options
         this.filteredColumnOptions = [...this.columnOptions];
         this.filteredOperatorOptions = [...this.operatorOptions];
@@ -125,12 +120,12 @@ export class Home implements OnInit {
         this.apiService.getColors(0, 100, this.selectedSector || undefined).subscribe({
             next: (response) => {
                 console.log('✅ Colors received from backend:', response.colors.length, 'total:', response.total_count);
-                
+
                 // Convert backend format to frontend display format
                 this.tableData = response.colors.map((color: ColorProcessed, index: number) => {
                     return this.apiService.convertToDisplayFormat(color, index);
                 });
-                
+
                 console.log('✅ Loaded', this.tableData.length, 'colors from backend');
                 console.log('Sample data:', this.tableData[0]);
             },
@@ -390,7 +385,7 @@ export class Home implements OnInit {
         };
         console.log('📋 Complete filter structure:', allFilters);
         this.filterVisible = false;
-        
+
         // Reload data with filters
         this.loadDataFromBackend();
     }
@@ -444,14 +439,12 @@ export class Home implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        const fileName = this.selectedRows.length > 0 
-            ? `marketpulse_selected_rows_${new Date().toISOString().split('T')[0]}.csv`
-            : `marketpulse_colors_${new Date().toISOString().split('T')[0]}.csv`;
+        const fileName = this.selectedRows.length > 0 ? `marketpulse_selected_rows_${new Date().toISOString().split('T')[0]}.csv` : `marketpulse_colors_${new Date().toISOString().split('T')[0]}.csv`;
         link.download = fileName;
         link.click();
         window.URL.revokeObjectURL(url);
         console.log('✅ Export completed');
-        
+
         this.messageService.add({
             severity: 'success',
             summary: 'Exported',
@@ -526,9 +519,7 @@ export class Home implements OnInit {
     }
 
     getExportButtonLabel(): string {
-        return this.selectedRows.length > 0 
-            ? `Export Selected (${this.selectedRows.length})` 
-            : 'Export All';
+        return this.selectedRows.length > 0 ? `Export Selected (${this.selectedRows.length})` : 'Export All';
     }
 
     // ==================== OUTPUT STATS DISPLAY ====================

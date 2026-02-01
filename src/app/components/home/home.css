@@ -38,6 +38,57 @@
 .minimize-table-btn .pi-compress {
     font-size: 14px;
 }
+
+/* Sidebar toggle button */
+.sidebar-toggle-btn {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    background: white !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    z-index: 30;
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: #f3f4f6 !important;
+    transform: translateX(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.sidebar-toggle-btn:active {
+    transform: translateX(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Smooth transitions for grid columns */
+.grid > div {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sidebar animation */
+.xl\:col-span-3 {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* AutoComplete styles */
 :host ::ng-deep .filter-dialog .p-autocomplete {
     width: 100%;
 }
@@ -73,4 +124,31 @@
     width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1279px) {
+    .sidebar-toggle-btn {
+        top: 20px;
+        right: 20px;
+    }
+
+    /* On mobile, hide sidebar and show toggle button more prominently */
+    .xl\:col-span-3 {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: 320px;
+        z-index: 40;
+        background: white;
+        box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar-toggle-btn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 50;
+    }
 }

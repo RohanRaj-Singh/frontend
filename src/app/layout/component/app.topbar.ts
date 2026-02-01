@@ -17,14 +17,13 @@ import { filter, Subscription } from 'rxjs';
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
             <a class="layout-topbar-logo flex items-center gap-4" routerLink="/">
-            <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
-            <i class="pi pi-bars"></i>
-            </button>
+                <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
+                    <i class="pi pi-bars"></i>
+                </button>
+
                 <!-- Brand -->
                 <div class="flex flex-col leading-tight">
-                    <span class="font-bold whitespace-nowrap">
-                        Market Pulse
-                    </span>
+                    <span class="font-bold whitespace-nowrap">Market Pulse</span>
                     <span class="text-xs text-gray-500 whitespace-nowrap">
                         Movement Intelligence
                     </span>
@@ -43,26 +42,28 @@ import { filter, Subscription } from 'rxjs';
 
         <div class="layout-topbar-actions">
 
-            <!-- ASSET SELECTION (HOME ONLY) -->
+            <!-- ASSET SELECTION -->
             <div class="asset-selection" *ngIf="isHomeRoute">
+                <span class="asset-dot"></span>
                 <p-select
-  [options]="assetOptions"
-  [(ngModel)]="selectedAsset"
-  optionLabel="name"
-  class="asset-selector"
-  (ngModelChange)="onAssetChange($event)">
-</p-select>
-
+                    [options]="assetOptions"
+                    [(ngModel)]="selectedAsset"
+                    optionLabel="name"
+                    class="asset-selector"
+                    (ngModelChange)="onAssetChange($event)">
+                </p-select>
             </div>
 
-            <!-- Next Run Timer -->
-            <div class="next-run">
+            <!-- NEXT RUN TIMER (PARENT HAS BORDER) -->
+            <div class="next-run-wrapper">
                 <span class="next-run-label">Next Run in</span>
-                <span class="next-run-timer">{{ nextRunTimer }}</span>
+                <span class="next-run-timer-pill">{{ nextRunTimer }}</span>
             </div>
 
-            <!-- User Info -->
+            <!-- USER INFO -->
             <div class="user-info">
+                <span class="user-divider"></span>
+
                 <div class="user-details">
                     <div class="user-name">Shashank S.</div>
                     <div class="user-email">Shashank.Srivastava@spglobal.com</div>
@@ -82,9 +83,7 @@ import { filter, Subscription } from 'rxjs';
                 background-color: var(--surface-card);
                 border-bottom: 1px solid var(--surface-border);
                 position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
+                inset: 0;
                 z-index: 1000;
             }
 
@@ -102,10 +101,6 @@ import { filter, Subscription } from 'rxjs';
                 color: inherit;
             }
 
-            .layout-topbar-logo-image {
-                height: 2rem;
-            }
-
             .layout-topbar-actions {
                 display: flex;
                 align-items: center;
@@ -115,38 +110,76 @@ import { filter, Subscription } from 'rxjs';
             .asset-selection {
                 display: flex;
                 align-items: center;
+                gap: 0.5rem;
+                padding: 0.6rem 1rem;
+                border-radius: 9999px;
+                border: 1px solid #e5e7eb; /* soft gray */
+                background: #ffffff;
+            }
+
+            .asset-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background-color: #22c55e;
             }
 
             .asset-selector {
-                min-width: 120px;
+                min-width: 110px;
             }
 
-            .next-run {
+            /* REMOVE INNER BORDER AFTER GREEN DOT */
+            :host ::ng-deep .asset-selector .p-dropdown {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+
+            /* NEXT RUN */
+            .next-run-wrapper {
                 display: flex;
-                flex-direction: column;
                 align-items: center;
+                gap: 0.75rem;
+                padding: 0.35rem 0.75rem;
+                border-radius: 9999px;
+                border: 1px solid var(--surface-border);
+                background: var(--surface-card);
             }
 
             .next-run-label {
                 font-size: 0.75rem;
                 color: var(--text-color-secondary);
+                white-space: nowrap;
             }
 
-            .next-run-timer {
+            .next-run-timer-pill {
+                padding: 0.25rem 0.75rem;
+                border-radius: 9999px;
+                border: 1px solid var(--surface-border);
                 font-size: 0.875rem;
                 font-weight: 600;
+                background: var(--surface-card);
+                white-space: nowrap;
             }
 
+            /* USER INFO */
             .user-info {
                 display: flex;
                 align-items: center;
                 gap: 0.75rem;
             }
 
+            .user-divider {
+                width: 1px;
+                height: 2rem;
+                background-color: #e5e7eb;
+            }
+
             .user-details {
                 display: flex;
                 flex-direction: column;
-                align-items: flex-end;
+                align-items: flex-start;
             }
 
             .user-name {
@@ -168,15 +201,9 @@ import { filter, Subscription } from 'rxjs';
                 cursor: pointer;
             }
 
-            :host ::ng-deep .asset-selector .p-dropdown {
-                border: none !important;
-                background: transparent !important;
-                box-shadow: none !important;
-            }
-
             @media (max-width: 768px) {
                 .asset-selection,
-                .next-run,
+                .next-run-wrapper,
                 .user-details {
                     display: none;
                 }
@@ -205,10 +232,8 @@ export class AppTopbar implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        // Handle initial load
         this.updateHomeRoute(this.router.url);
 
-        // Handle navigation changes
         this.routerSub = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
             this.updateHomeRoute(event.urlAfterRedirects);
         });
@@ -217,6 +242,7 @@ export class AppTopbar implements OnInit, OnDestroy {
     private updateHomeRoute(url: string): void {
         this.isHomeRoute = url === '/' || url.startsWith('/home');
     }
+
     onAssetChange(asset: any) {
         this.assetStateService.setAsset(asset);
     }

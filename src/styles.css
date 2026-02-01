@@ -1,82 +1,114 @@
-/* ===============================
-   Degular font registration
-   =============================== */
-
-@font-face {
-    font-family: 'Degular';
-    src: url('/assets/fonts/degular/Degular-Regular.otf') format('opentype');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Degular';
-    src: url('/assets/fonts/degular/Degular-Medium.otf') format('opentype');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Degular';
-    src: url('/assets/fonts/degular/Degular-Bold.otf') format('opentype');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
-
-/* ===============================
-   Tailwind v4 (ONLY utilities)
-   =============================== */
-
 @tailwind utilities;
 
-/* ===============================
-   Global theme variables
-   =============================== */
-
-:root {
-    --bg-page: #f9fafb;
-    --bg-card: #ffffff;
-    --text-primary: #111827;
-    --border-color: #e5e7eb;
-    --input-bg: #ffffff;
-}
-
-html.dark {
-    --bg-page: #0f172a;
-    --bg-card: #1f2937;
-    --text-primary: #f9fafb;
-    --border-color: #374151;
-    --input-bg: #020617;
-}
-
-/* ===============================
-   FORCE Degular globally (v4 fix)
-   =============================== */
-
 html,
-body,
-#app,
-#root {
-    font-family:
-        'Degular',
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        Roboto,
-        Oxygen,
-        Ubuntu,
-        Cantarell,
-        'Helvetica Neue',
-        sans-serif;
+body {
+    font-family: 'Poppins', sans-serif;
 }
 
-/* PrimeNG override */
-.p-component {
-    font-family: inherit !important;
+.poppins-thin {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 100;
+    font-style: normal;
 }
-.p-component * {
-    font-family: inherit !important;
+
+.poppins-extralight {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 200;
+    font-style: normal;
+}
+
+.poppins-light {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    font-style: normal;
+}
+
+.poppins-regular {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.poppins-medium {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+}
+
+.poppins-semibold {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-style: normal;
+}
+
+.poppins-bold {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+
+.poppins-extrabold {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-style: normal;
+}
+
+.poppins-black {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-style: normal;
+}
+
+.poppins-thin-italic {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 100;
+    font-style: italic;
+}
+
+.poppins-extralight-italic {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 200;
+    font-style: italic;
+}
+
+.poppins-light-italic {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    font-style: italic;
+}
+
+.poppins-regular-italic {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.poppins-medium-italic {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.poppins-semibold-italic {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-style: italic;
+}
+
+.poppins-bold-italic {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+}
+
+.poppins-extrabold-italic {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-style: italic;
+}
+
+.poppins-black-italic {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-style: italic;
 }
