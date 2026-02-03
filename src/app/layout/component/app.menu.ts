@@ -66,19 +66,19 @@ export class AppMenu {
                     },
                     {
                         label: 'Preset',
-                        svgIcon: 'assets/icon/cronjobs.svg', // Change to your SVG path
+                        svgIcon: 'assets/icon/presets.svg', // Change to your SVG path
                         routerLink: ['/settings'],
                         queryParams: { section: 'preset' }
                     },
                     {
                         label: 'Cron Jobs',
-                        svgIcon: 'assets/icon/clock.svg', // Change to your SVG path
+                        svgIcon: 'assets/icon/cronjob.svg', // Change to your SVG path
                         routerLink: ['/settings'],
                         queryParams: { section: 'cron-jobs' }
                     },
                     {
                         label: 'Email & Restore',
-                        svgIcon: 'assets/icon/envelope.svg', // Change to your SVG path
+                        svgIcon: 'assets/icon/info.svg', // Change to your SVG path
                         routerLink: ['/settings'],
                         queryParams: { section: 'restore-email' }
                     }
