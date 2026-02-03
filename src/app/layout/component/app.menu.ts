@@ -4,6 +4,11 @@ import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
 
+// Extend MenuItem to support SVG icons
+interface MenuItemWithSvg extends MenuItem {
+    svgIcon?: string; // Path to SVG file or inline SVG
+}
+
 @Component({
     selector: 'app-menu',
     standalone: true,
@@ -16,23 +21,33 @@ import { AppMenuitem } from './app.menuitem';
     </ul> `
 })
 export class AppMenu {
-    model: MenuItem[] = [];
+    model: MenuItemWithSvg[] = [];
 
     ngOnInit() {
         this.model = [
             {
                 label: 'Main',
                 items: [
-                    { label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/home'] },
-                    { label: 'Security Search', icon: 'pi pi-fw pi-search', routerLink: ['/home'], disabled: true, title: 'Coming Soon' },
+                    {
+                        label: 'Dashboard',
+                        svgIcon: 'assets/icon/dashboard.svg', // Change to your SVG path
+                        routerLink: ['/home']
+                    },
+                    {
+                        label: 'Security Search',
+                        svgIcon: 'assets/icon/security.svg', // Change to your SVG path
+                        routerLink: ['/home'],
+                        disabled: true,
+                        title: 'Coming Soon'
+                    },
                     {
                         label: 'Color Process',
-                        icon: 'pi pi-fw pi-palette',
+                        svgIcon: 'assets/icon/colorprocess.svg', // Change to your SVG path
                         routerLink: ['/color-type']
                     },
                     {
                         label: 'Data Statistics',
-                        icon: 'pi pi-fw pi-chart-bar',
+                        svgIcon: 'assets/icon/data.svg', // Change to your SVG path
                         routerLink: ['/home'],
                         disabled: true,
                         title: 'Coming Soon'
@@ -45,25 +60,25 @@ export class AppMenu {
                 items: [
                     {
                         label: 'Rules',
-                        icon: 'pi pi-fw pi-cog',
+                        svgIcon: 'assets/icon/rules.svg', // Change to your SVG path
                         routerLink: ['/settings'],
                         queryParams: { section: 'rules' }
                     },
                     {
                         label: 'Preset',
-                        icon: 'pi pi-fw pi-sliders-h',
+                        svgIcon: 'assets/icon/cronjobs.svg', // Change to your SVG path
                         routerLink: ['/settings'],
                         queryParams: { section: 'preset' }
                     },
                     {
                         label: 'Cron Jobs',
-                        icon: 'pi pi-fw pi-clock',
+                        svgIcon: 'assets/icon/clock.svg', // Change to your SVG path
                         routerLink: ['/settings'],
                         queryParams: { section: 'cron-jobs' }
                     },
                     {
                         label: 'Email & Restore',
-                        icon: 'pi pi-fw pi-envelope',
+                        svgIcon: 'assets/icon/envelope.svg', // Change to your SVG path
                         routerLink: ['/settings'],
                         queryParams: { section: 'restore-email' }
                     }

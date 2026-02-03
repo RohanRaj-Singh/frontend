@@ -8,6 +8,11 @@ import { RippleModule } from 'primeng/ripple';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../service/layout.service';
 
+// Extend MenuItem to support SVG icons
+interface MenuItemWithSvg extends MenuItem {
+    svgIcon?: string;
+}
+
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[app-menuitem]',
@@ -16,7 +21,10 @@ import { LayoutService } from '../service/layout.service';
         <ng-container>
             <div *ngIf="root && item.visible !== false" class="layout-menuitem-root-text">{{ item.label }}</div>
             <a *ngIf="(!item.routerLink || item.items) && item.visible !== false" [attr.href]="item.url" (click)="itemClick($event)" [ngClass]="item.styleClass" [attr.target]="item.target" tabindex="0" pRipple>
-                <i [ngClass]="item.icon" class="layout-menuitem-icon"></i>
+                <!-- SVG Icon -->
+                <img *ngIf="itemWithSvg.svgIcon" [src]="itemWithSvg.svgIcon" class="layout-menuitem-icon svg-icon" alt="" />
+                <!-- Fallback to icon font if no SVG -->
+                <i *ngIf="!itemWithSvg.svgIcon && item.icon" [ngClass]="item.icon" class="layout-menuitem-icon"></i>
                 <span class="layout-menuitem-text">{{ item.label }}</span>
                 <i class="pi pi-fw pi-angle-down layout-submenu-toggler" *ngIf="item.items"></i>
             </a>
@@ -38,7 +46,10 @@ import { LayoutService } from '../service/layout.service';
                 tabindex="0"
                 pRipple
             >
-                <i [ngClass]="item.icon" class="layout-menuitem-icon"></i>
+                <!-- SVG Icon -->
+                <img *ngIf="itemWithSvg.svgIcon" [src]="itemWithSvg.svgIcon" class="layout-menuitem-icon svg-icon" alt="" />
+                <!-- Fallback to icon font if no SVG -->
+                <i *ngIf="!itemWithSvg.svgIcon && item.icon" [ngClass]="item.icon" class="layout-menuitem-icon"></i>
                 <span class="layout-menuitem-text">{{ item.label }}</span>
                 <i class="pi pi-fw pi-angle-down layout-submenu-toggler" *ngIf="item.items"></i>
             </a>
@@ -50,6 +61,15 @@ import { LayoutService } from '../service/layout.service';
             </ul>
         </ng-container>
     `,
+    styles: [
+        `
+            .svg-icon {
+                width: 1.25rem;
+                height: 1.25rem;
+                object-fit: contain;
+            }
+        `
+    ],
     animations: [
         trigger('children', [
             state(
@@ -85,6 +105,11 @@ export class AppMenuitem {
     menuResetSubscription: Subscription;
 
     key: string = '';
+
+    // Getter to access svgIcon property
+    get itemWithSvg(): MenuItemWithSvg {
+        return this.item as MenuItemWithSvg;
+    }
 
     constructor(
         public router: Router,
