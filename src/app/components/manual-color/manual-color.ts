@@ -11,6 +11,43 @@ import { MessageService } from 'primeng/api';
 import { TabulatorTableComponent, TableConfig } from '../tabulator-table/tabulator-table.component';
 import { ApiService, ColorRaw, ColorDisplay, UploadResponse, ProcessResponse } from '../../services/api.service';
 
+// Add missing interfaces from import.service.ts
+export interface ImportedRow {
+  row_id: number;
+  message_id: string;
+  cusip: string;
+  ticker: string;
+  date: string;
+  rank: number;
+  px: number;
+  bid: number;
+  mid: number;
+  ask: number;
+  source: string;
+  bias: string;
+  is_parent: boolean;
+  parent_id: number | null;
+  child_count: number;
+  color: string;
+}
+
+export interface ImportResponse {
+  success: boolean;
+  session_id: string;
+  filename: string;
+  rows_imported: number;
+  rows_valid: number;
+  parsing_errors: string[];
+  sorted_preview: ImportedRow[];
+  statistics: {
+    total_rows: number;
+    parent_rows: number;
+    child_rows: number;
+    unique_cusips: number;
+  };
+  duration_seconds: number;
+}
+
 @Component({
   selector: 'app-manual-color',
   standalone: true,
@@ -35,14 +72,18 @@ export class ManualColor implements OnInit {
   isUploading = false;
   isProcessing = false;
   
-  // Uploaded colors from backend (after Excel parsing)
+  // Store session ID from backend
+  currentSessionId: string | null = null;
+  importStats: any = null;
+  
+  // Uploaded colors from backend
   uploadedColors: ColorRaw[] = [];
   processedColors: ColorDisplay[] = [];
 
   // Tabulator configuration - EDITABLE MODE
   tabulatorConfig: TableConfig = {
     title: 'Manual Color Data',
-    editable: true,               // ✅ EDITABLE - enables floating actions
+    editable: true,
     allowImport: false,
     allowExport: true,
     allowS3Fetch: false,
@@ -63,7 +104,7 @@ export class ManualColor implements OnInit {
   }
 
   /**
-   * Open import dialog
+   * Open import dialog - FIXED: Changed from openImportDialog to showImportDialog
    */
   openImportDialog() {
     this.showImportDialog = true;
@@ -79,11 +120,10 @@ export class ManualColor implements OnInit {
     console.log('📥 Uploading file to backend:', file.name);
     this.isUploading = true;
 
+    // Use the existing API service method (keep existing backend endpoint)
     this.apiService.uploadManualColors(file).subscribe({
       next: (response: UploadResponse) => {
         console.log('✅ File uploaded successfully:', response);
-        
-        this.uploadedColors = response.colors;
         
         // Convert to display format for table
         this.processedColors = response.colors.map((color: ColorRaw, index: number) => {
@@ -144,7 +184,7 @@ export class ManualColor implements OnInit {
    * Process colors through ranking engine
    */
   runAutomation() {
-    if (this.uploadedColors.length === 0) {
+    if (this.uploadedColors.length === 0 && this.processedColors.length === 0) {
       this.messageService.add({
         severity: 'warn',
         summary: 'No Data',
@@ -156,7 +196,12 @@ export class ManualColor implements OnInit {
     console.log('⚙️ Processing colors through ranking engine...');
     this.isProcessing = true;
 
-    this.apiService.processManualColors(this.uploadedColors).subscribe({
+    // Convert processedColors back to uploadedColors format if needed
+    const colorsToProcess = this.uploadedColors.length > 0 
+      ? this.uploadedColors 
+      : this.processedColors.map(color => this.apiService.convertToBackendFormat(color));
+
+    this.apiService.processManualColors(colorsToProcess).subscribe({
       next: (response: ProcessResponse) => {
         console.log('✅ Colors processed successfully:', response);
         
@@ -185,7 +230,7 @@ export class ManualColor implements OnInit {
   }
 
   /**
-   * Cancel import
+   * Cancel import - FIXED: Added missing method
    */
   onCancelUpload() {
     this.showImportDialog = false;
@@ -197,12 +242,33 @@ export class ManualColor implements OnInit {
   onTableDataChanged(data: any[]) {
     console.log('📝 Table data changed:', data.length, 'rows');
     
-    // Convert back to ColorRaw format and update uploadedColors
-    this.uploadedColors = data.map((displayColor: any) => {
-      return this.apiService.convertToBackendFormat(displayColor);
-    });
+    // Convert back to ColorDisplay format
+    this.processedColors = data.map((item: any) => ({
+      rowNumber: item.rowNumber || String(this.processedColors.length + 1),
+      messageId: item.messageId || item.message_id || '',
+      ticker: item.ticker || item.tickerId || '',
+      sector: item.sector || '',
+      cusip: item.cusip || '',
+      date: item.date || '',
+      price_level: item.price_level || 0,
+      bid: item.bid || 0,
+      ask: item.ask || 0,
+      px: item.px || 0,
+      source: item.source || '',
+      bias: item.bias || '',
+      rank: item.rank || 5,
+      cov_price: item.cov_price || 0,
+      percent_diff: item.percent_diff || 0,
+      price_diff: item.price_diff || 0,
+      confidence: item.confidence || 5,
+      isParent: item.isParent || false,
+      childrenCount: item.childrenCount || 0
+    }));
     
-    this.processedColors = data;
+    // Also update uploadedColors
+    this.uploadedColors = this.processedColors.map(color => 
+      this.apiService.convertToBackendFormat(color)
+    );
   }
 
   /**
@@ -210,11 +276,33 @@ export class ManualColor implements OnInit {
    */
   onTableDataLoaded(data: any[]) {
     console.log('📥 Table data loaded:', data.length, 'rows');
-    this.processedColors = data;
+    
+    // Convert to ColorDisplay format
+    this.processedColors = data.map((item: any, index: number) => ({
+      rowNumber: item.rowNumber || String(index + 1),
+      messageId: item.messageId || item.message_id || '',
+      ticker: item.ticker || item.tickerId || '',
+      sector: item.sector || '',
+      cusip: item.cusip || '',
+      date: item.date || '',
+      price_level: item.price_level || 0,
+      bid: item.bid || 0,
+      ask: item.ask || 0,
+      px: item.px || 0,
+      source: item.source || '',
+      bias: item.bias || '',
+      rank: item.rank || 5,
+      cov_price: item.cov_price || 0,
+      percent_diff: item.percent_diff || 0,
+      price_diff: item.price_diff || 0,
+      confidence: item.confidence || 5,
+      isParent: item.isParent || false,
+      childrenCount: item.childrenCount || 0
+    }));
   }
 
   /**
-   * Handle row selection (from Tabulator)
+   * Handle row selection (from Tabulator) - FIXED: Added missing method
    */
   onTableRowSelected(selectedRows: any[]) {
     console.log('✅ Selected rows:', selectedRows.length);
@@ -264,6 +352,9 @@ export class ManualColor implements OnInit {
   clearData() {
     this.uploadedColors = [];
     this.processedColors = [];
+    this.currentSessionId = null;
+    this.importStats = null;
+    
     this.messageService.add({
       severity: 'info',
       summary: 'Cleared',
@@ -276,5 +367,30 @@ export class ManualColor implements OnInit {
    */
   get colors(): ColorDisplay[] {
     return this.processedColors;
+  }
+
+  // Helper method to convert imported rows to ColorDisplay format
+  private convertImportedToColorDisplay(importedRows: ImportedRow[]): ColorDisplay[] {
+    return importedRows.map((row, index) => ({
+      rowNumber: String(index + 1),
+      messageId: row.message_id,
+      ticker: row.ticker,
+      sector: '', // Not in imported data
+      cusip: row.cusip,
+      date: row.date,
+      price_level: 0, // Default
+      bid: row.bid,
+      ask: row.ask,
+      px: row.px,
+      source: row.source,
+      bias: row.bias,
+      rank: row.rank,
+      cov_price: 0, // Default
+      percent_diff: 0, // Default
+      price_diff: 0, // Default
+      confidence: 5, // Default
+      isParent: row.is_parent,
+      childrenCount: row.child_count || 0
+    }));
   }
 }
