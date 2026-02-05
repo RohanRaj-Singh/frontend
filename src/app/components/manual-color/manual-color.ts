@@ -1,52 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { TabulatorTableComponent, TableConfig } from '../tabulator-table/tabulator-table.component';
-import { ApiService, ColorRaw, ColorDisplay, UploadResponse, ProcessResponse } from '../../services/api.service';
-
-// Add missing interfaces from import.service.ts
-export interface ImportedRow {
-  row_id: number;
-  message_id: string;
-  cusip: string;
-  ticker: string;
-  date: string;
-  rank: number;
-  px: number;
-  bid: number;
-  mid: number;
-  ask: number;
-  source: string;
-  bias: string;
-  is_parent: boolean;
-  parent_id: number | null;
-  child_count: number;
-  color: string;
-}
-
-export interface ImportResponse {
-  success: boolean;
-  session_id: string;
-  filename: string;
-  rows_imported: number;
-  rows_valid: number;
-  parsing_errors: string[];
-  sorted_preview: ImportedRow[];
-  statistics: {
-    total_rows: number;
-    parent_rows: number;
-    child_rows: number;
-    unique_cusips: number;
-  };
-  duration_seconds: number;
-}
+import { CustomTableComponent, TableColumn, TableRow, TableConfig } from '../custom-table/custom-table.component';
+import { FilterDialogComponent } from '../filter-dialog/filter-dialog.component';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-manual-color',
@@ -58,40 +23,54 @@ export interface ImportResponse {
     InputTextModule,
     ButtonModule,
     ToastModule,
+    TooltipModule,
     ProgressSpinnerModule,
     FormsModule,
-    TabulatorTableComponent
+    CustomTableComponent,
+    FilterDialogComponent
   ],
   templateUrl: './manual-color.html',
   styleUrls: ['./manual-color.css'],
   providers: [MessageService]
 })
 export class ManualColor implements OnInit {
+  @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
+
   searchText = '';
   showImportDialog = false;
+  showFilterDialog = false;
   isUploading = false;
-  isProcessing = false;
+  isTableExpanded: boolean = false;
+  selectedFile: File | null = null;
+  fileSize: string = '';
   
-  // Store session ID from backend
+  // Session management
   currentSessionId: string | null = null;
-  importStats: any = null;
   
-  // Uploaded colors from backend
-  uploadedColors: ColorRaw[] = [];
-  processedColors: ColorDisplay[] = [];
+  // Table data
+  tableData: TableRow[] = [];
+  
+  // Table configuration
+  tableColumns: TableColumn[] = [
+    { field: 'messageId', header: 'Message ID', width: '180px', editable: true },
+    { field: 'ticker', header: 'Ticker', width: '140px', editable: true },
+    { field: 'cusip', header: 'CUSIP', width: '140px', editable: true },
+    { field: 'bias', header: 'Bias', width: '120px', editable: true },
+    { field: 'date', header: 'Date', width: '120px', editable: true },
+    { field: 'bid', header: 'BID', width: '100px', editable: true, type: 'number' },
+    { field: 'mid', header: 'MID', width: '100px', editable: true, type: 'number' },
+    { field: 'ask', header: 'ASK', width: '100px', editable: true, type: 'number' },
+    { field: 'px', header: 'PX', width: '100px', editable: true, type: 'number' },
+    { field: 'source', header: 'Source', width: '140px', editable: true }
+  ];
 
-  // Tabulator configuration - EDITABLE MODE
-  tabulatorConfig: TableConfig = {
-    title: 'Manual Color Data',
+  tableConfig: TableConfig = {
     editable: true,
-    allowImport: false,
-    allowExport: true,
-    allowS3Fetch: false,
-    pagination: true,
-    paginationSize: 10,
     selectable: true,
-    movableColumns: true,
-    headerFilter: false
+    showSelectButton: true,
+    showRowNumbers: true,
+    pagination: true,
+    pageSize: 20
   };
 
   constructor(
@@ -103,67 +82,116 @@ export class ManualColor implements OnInit {
     console.log('🚀 Manual Color component initialized');
   }
 
+  // ==================== FILE UPLOAD ====================
+
   /**
-   * Open import dialog - FIXED: Changed from openImportDialog to showImportDialog
+   * Trigger native file input dialog
    */
-  openImportDialog() {
-    this.showImportDialog = true;
+  triggerFileInput() {
+    if (this.fileInputRef && this.fileInputRef.nativeElement) {
+      this.fileInputRef.nativeElement.click();
+    }
   }
 
   /**
-   * Handle file upload to backend
+   * Handle native file selection
    */
-  onUpload(event: any) {
-    const file: File = event.files[0];
-    if (!file) return;
+  onNativeFileSelect(event: any) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    console.log('📥 Uploading file to backend:', file.name);
+    const file: File = files[0];
+    
+    // Validate file type
+    const validExtensions = ['.xlsx', '.xls'];
+    const fileName = file.name.toLowerCase();
+    const isValidFile = validExtensions.some(ext => fileName.endsWith(ext));
+
+    if (!isValidFile) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Invalid File',
+        detail: 'Only .xlsx and .xls files are supported'
+      });
+      return;
+    }
+
+    // Store file and display info
+    this.selectedFile = file;
+    this.fileSize = this.formatFileSize(file.size);
+
+    console.log('📄 File selected:', file.name, 'Size:', this.fileSize);
+
+    // Reset file input so same file can be selected again if needed
+    event.target.value = '';
+  }
+
+  openImportDialog() {
+    this.showImportDialog = true;
+    this.selectedFile = null;
+    this.fileSize = '';
+    this.isUploading = false;
+  }
+
+  onUpload() {
+    if (!this.selectedFile) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'No File Selected',
+        detail: 'Please select a file to import'
+      });
+      return;
+    }
+
+    console.log('📥 Uploading file to backend:', this.selectedFile.name);
     this.isUploading = true;
 
-    // Use the existing API service method (keep existing backend endpoint)
-    this.apiService.uploadManualColors(file).subscribe({
-      next: (response: UploadResponse) => {
-        console.log('✅ File uploaded successfully:', response);
+    this.apiService.importManualColorFile(this.selectedFile, 1).subscribe({
+      next: (response: any) => {
+        console.log('✅ File imported successfully:', response);
         
-        // Convert to display format for table
-        this.processedColors = response.colors.map((color: ColorRaw, index: number) => {
-          return {
-            rowNumber: String(index + 1),
-            messageId: String(color.message_id),
-            ticker: color.ticker,
-            sector: color.sector,
-            cusip: color.cusip,
-            date: color.date,
-            price_level: color.price_level,
-            bid: color.bid,
-            ask: color.ask,
-            px: color.px,
-            source: color.source,
-            bias: color.bias,
-            rank: color.rank,
-            cov_price: color.cov_price,
-            percent_diff: color.percent_diff,
-            price_diff: color.price_diff,
-            confidence: color.confidence,
-            isParent: false,
-            childrenCount: 0
-          };
-        });
+        if (response.success) {
+          this.currentSessionId = response.session_id;
+          
+          // Convert backend data to table format
+          this.tableData = response.sorted_preview.map((row: any, index: number) => ({
+            _rowId: `row_${row.message_id}`,
+            _selected: false,
+            rowNumber: String(row.message_id),  // Use message_id as row identifier
+            messageId: row.message_id,
+            ticker: row.ticker,
+            cusip: row.cusip,
+            bias: row.bias,
+            date: row.date ? new Date(row.date).toLocaleDateString() : '',
+            bid: row.bid,
+            mid: (row.bid + row.ask) / 2,
+            ask: row.ask,
+            px: row.px,
+            source: row.source,
+            rank: row.rank,
+            isParent: row.is_parent,
+            parentRow: row.parent_message_id,  // Use parent_message_id
+            childrenCount: row.child_count || 0
+          }));
 
-        this.showImportDialog = false;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: `Uploaded ${response.valid_colors} valid colors from ${response.filename}. ${response.errors_count} errors found.`
-        });
-
-        if (response.errors_count > 0) {
+          this.showImportDialog = false;
+          
           this.messageService.add({
-            severity: 'warn',
-            summary: 'Parsing Warnings',
-            detail: `${response.errors_count} rows had errors. Check console for details.`
+            severity: 'success',
+            summary: 'Import Successful',
+            detail: `Imported ${response.rows_imported} rows. ${response.statistics.parent_rows} parents, ${response.statistics.child_rows} children.`
           });
-          console.log('Parsing errors:', response.errors);
+
+          if (response.parsing_errors && response.parsing_errors.length > 0) {
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Parsing Warnings',
+              detail: `${response.parsing_errors.length} errors found. Check console for details.`
+            });
+            console.warn('Parsing errors:', response.parsing_errors);
+          }
+        } else {
+          throw new Error(response.error || 'Import failed');
         }
       },
       error: (error) => {
@@ -180,217 +208,184 @@ export class ManualColor implements OnInit {
     });
   }
 
+  onCancelUpload() {
+    this.showImportDialog = false;
+    this.selectedFile = null;
+    this.fileSize = '';
+    this.isUploading = false;
+  }
+
   /**
-   * Process colors through ranking engine
+   * Format file size to human readable format
    */
+  private formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  /**
+   * Get file extension icon
+   */
+  getFileIcon(): string {
+    if (!this.selectedFile) return 'pi-file';
+    
+    const name = this.selectedFile.name.toLowerCase();
+    if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+      return 'pi-file-excel';
+    }
+    return 'pi-file';
+  }
+
+  // ==================== TABLE EXPANSION ====================
+
+  toggleTableExpansion() {
+    console.log('📄 Toggling table expansion - Current state:', this.isTableExpanded);
+    this.isTableExpanded = !this.isTableExpanded;
+    
+    // Notify sidebar to collapse/expand
+    if (this.isTableExpanded) {
+      // Collapse sidebar
+      document.body.style.overflow = 'hidden';
+      const sidebar = document.querySelector('.layout-sidebar');
+      if (sidebar) {
+        (sidebar as HTMLElement).style.display = 'none';
+      }
+    } else {
+      // Restore sidebar
+      document.body.style.overflow = 'auto';
+      const sidebar = document.querySelector('.layout-sidebar');
+      if (sidebar) {
+        (sidebar as HTMLElement).style.display = 'block';
+      }
+    }
+    
+    console.log('📄 New expanded state:', this.isTableExpanded);
+  }
+
+  // ==================== TABLE EVENTS ====================
+
+  onTableDataChanged(data: TableRow[]) {
+    console.log('📊 Table data changed:', data.length, 'rows');
+    this.tableData = data;
+  }
+
+  onTableRowsSelected(selectedRows: TableRow[]) {
+    console.log('✅ Rows selected:', selectedRows.length);
+  }
+
+  onCellEdited(event: any) {
+    console.log('📝 Cell edited:', event);
+  }
+
+  // ==================== ACTIONS ====================
+
+  addNewRow() {
+    const newRow: TableRow = {
+      _rowId: `row_new_${Date.now()}`,
+      _selected: false,
+      rowNumber: String(this.tableData.length + 1),
+      messageId: '',
+      ticker: '',
+      cusip: '',
+      bias: '',
+      date: new Date().toLocaleDateString(),
+      bid: 0,
+      mid: 0,
+      ask: 0,
+      px: 0,
+      source: 'MANUAL',
+      rank: 5,
+      isParent: true,
+      childrenCount: 0
+    };
+    
+    this.tableData = [newRow, ...this.tableData];
+    
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Row Added',
+      detail: 'New row added to table'
+    });
+  }
+
   runAutomation() {
-    if (this.uploadedColors.length === 0 && this.processedColors.length === 0) {
+    if (!this.currentSessionId) {
       this.messageService.add({
         severity: 'warn',
         summary: 'No Data',
-        detail: 'Please upload an Excel file first'
+        detail: 'Please import data first'
       });
       return;
     }
 
-    console.log('⚙️ Processing colors through ranking engine...');
-    this.isProcessing = true;
+    console.log('⚙️ Running automation...');
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Processing',
+      detail: 'Running automation rules...'
+    });
 
-    // Convert processedColors back to uploadedColors format if needed
-    const colorsToProcess = this.uploadedColors.length > 0 
-      ? this.uploadedColors 
-      : this.processedColors.map(color => this.apiService.convertToBackendFormat(color));
+    setTimeout(() => {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Complete',
+        detail: 'Automation completed successfully'
+      });
+    }, 1000);
+  }
 
-    this.apiService.processManualColors(colorsToProcess).subscribe({
-      next: (response: ProcessResponse) => {
-        console.log('✅ Colors processed successfully:', response);
+  saveData() {
+    if (!this.currentSessionId) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'No Session',
+        detail: 'Please import data first'
+      });
+      return;
+    }
+
+    console.log('💾 Saving data...');
+    
+    this.apiService.saveManualColors(this.currentSessionId, 1).subscribe({
+      next: (response: any) => {
+        console.log('✅ Data saved:', response);
         
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Processing Complete',
-          detail: `Processed ${response.processed_count} colors: ${response.parents} parents, ${response.children} children`
-        });
-
-        // Clear uploaded colors after successful processing
-        this.uploadedColors = [];
-        this.processedColors = [];
+        if (response.success) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Saved',
+            detail: `Saved ${response.rows_saved} rows successfully`
+          });
+        }
       },
       error: (error) => {
-        console.error('❌ Error processing colors:', error);
+        console.error('❌ Error saving data:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Processing Failed',
-          detail: error.error?.detail || 'Failed to process colors'
+          summary: 'Save Failed',
+          detail: error.error?.detail || 'Failed to save data'
         });
-      },
-      complete: () => {
-        this.isProcessing = false;
       }
     });
   }
 
-  /**
-   * Cancel import - FIXED: Added missing method
-   */
-  onCancelUpload() {
-    this.showImportDialog = false;
+  // ==================== FILTERS ====================
+
+  showFilters() {
+    this.showFilterDialog = true;
   }
 
-  /**
-   * Handle table data changes (from Tabulator)
-   */
-  onTableDataChanged(data: any[]) {
-    console.log('📝 Table data changed:', data.length, 'rows');
-    
-    // Convert back to ColorDisplay format
-    this.processedColors = data.map((item: any) => ({
-      rowNumber: item.rowNumber || String(this.processedColors.length + 1),
-      messageId: item.messageId || item.message_id || '',
-      ticker: item.ticker || item.tickerId || '',
-      sector: item.sector || '',
-      cusip: item.cusip || '',
-      date: item.date || '',
-      price_level: item.price_level || 0,
-      bid: item.bid || 0,
-      ask: item.ask || 0,
-      px: item.px || 0,
-      source: item.source || '',
-      bias: item.bias || '',
-      rank: item.rank || 5,
-      cov_price: item.cov_price || 0,
-      percent_diff: item.percent_diff || 0,
-      price_diff: item.price_diff || 0,
-      confidence: item.confidence || 5,
-      isParent: item.isParent || false,
-      childrenCount: item.childrenCount || 0
-    }));
-    
-    // Also update uploadedColors
-    this.uploadedColors = this.processedColors.map(color => 
-      this.apiService.convertToBackendFormat(color)
-    );
-  }
-
-  /**
-   * Handle table data loaded (from Tabulator)
-   */
-  onTableDataLoaded(data: any[]) {
-    console.log('📥 Table data loaded:', data.length, 'rows');
-    
-    // Convert to ColorDisplay format
-    this.processedColors = data.map((item: any, index: number) => ({
-      rowNumber: item.rowNumber || String(index + 1),
-      messageId: item.messageId || item.message_id || '',
-      ticker: item.ticker || item.tickerId || '',
-      sector: item.sector || '',
-      cusip: item.cusip || '',
-      date: item.date || '',
-      price_level: item.price_level || 0,
-      bid: item.bid || 0,
-      ask: item.ask || 0,
-      px: item.px || 0,
-      source: item.source || '',
-      bias: item.bias || '',
-      rank: item.rank || 5,
-      cov_price: item.cov_price || 0,
-      percent_diff: item.percent_diff || 0,
-      price_diff: item.price_diff || 0,
-      confidence: item.confidence || 5,
-      isParent: item.isParent || false,
-      childrenCount: item.childrenCount || 0
-    }));
-  }
-
-  /**
-   * Handle row selection (from Tabulator) - FIXED: Added missing method
-   */
-  onTableRowSelected(selectedRows: any[]) {
-    console.log('✅ Selected rows:', selectedRows.length);
-  }
-
-  /**
-   * Add new row manually
-   */
-  addNewRow() {
-    const newRow: ColorDisplay = {
-      rowNumber: String(this.processedColors.length + 1),
-      messageId: '',
-      ticker: '',
-      sector: '',
-      cusip: '',
-      date: new Date().toISOString().split('T')[0],
-      price_level: 0,
-      bid: 0,
-      ask: 0,
-      px: 0,
-      source: '',
-      bias: '',
-      rank: 5,
-      cov_price: 0,
-      percent_diff: 0,
-      price_diff: 0,
-      confidence: 5,
-      isParent: false,
-      childrenCount: 0
-    };
-    
-    this.processedColors = [newRow, ...this.processedColors];
-    
-    // Also add to uploadedColors
-    this.uploadedColors = [this.apiService.convertToBackendFormat(newRow), ...this.uploadedColors];
-    
+  onFiltersApplied(filters: any) {
+    console.log('✅ Filters applied:', filters);
     this.messageService.add({
       severity: 'success',
-      summary: 'Added',
-      detail: 'New color row added'
+      summary: 'Filters Applied',
+      detail: `${filters.conditions.length} filter(s) applied`
     });
-  }
-
-  /**
-   * Clear all data
-   */
-  clearData() {
-    this.uploadedColors = [];
-    this.processedColors = [];
-    this.currentSessionId = null;
-    this.importStats = null;
-    
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Cleared',
-      detail: 'All color data cleared'
-    });
-  }
-
-  /**
-   * Get colors for table display
-   */
-  get colors(): ColorDisplay[] {
-    return this.processedColors;
-  }
-
-  // Helper method to convert imported rows to ColorDisplay format
-  private convertImportedToColorDisplay(importedRows: ImportedRow[]): ColorDisplay[] {
-    return importedRows.map((row, index) => ({
-      rowNumber: String(index + 1),
-      messageId: row.message_id,
-      ticker: row.ticker,
-      sector: '', // Not in imported data
-      cusip: row.cusip,
-      date: row.date,
-      price_level: 0, // Default
-      bid: row.bid,
-      ask: row.ask,
-      px: row.px,
-      source: row.source,
-      bias: row.bias,
-      rank: row.rank,
-      cov_price: 0, // Default
-      percent_diff: 0, // Default
-      price_diff: 0, // Default
-      confidence: 5, // Default
-      isParent: row.is_parent,
-      childrenCount: row.child_count || 0
-    }));
   }
 }

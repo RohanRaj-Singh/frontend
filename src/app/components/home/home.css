@@ -14,57 +14,44 @@
     height: 40px !important;
     padding: 0 !important;
     border-radius: 8px !important;
-    background: #ffffff !important;
-    border: 1px solid #d1d5db !important;
-    color: #374151 !important;
+    background: #111827 !important;
+    border: 1px solid #111827 !important;
+    color: #ffffff !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     transition: all 0.2s ease !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 .minimize-table-btn:hover {
-    background-color: #f3f4f6 !important;
+    background-color: #000000 !important;
+    border-color: #000000 !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 .minimize-table-btn:active {
     transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
-.minimize-table-btn .pi-compress {
+.minimize-table-btn .pi {
     font-size: 14px;
 }
 
-/* Sidebar toggle button */
-.sidebar-toggle-btn {
-    width: 36px !important;
-    height: 36px !important;
-    padding: 0 !important;
-    border-radius: 50% !important;
-    background: white !important;
-    border: 1px solid #d1d5db !important;
-    color: #374151 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    z-index: 30;
+/* Expanded view overlay */
+.fixed.inset-0 {
+    animation: fadeIn 0.3s ease-out;
 }
 
-.sidebar-toggle-btn:hover {
-    background-color: #f3f4f6 !important;
-    transform: translateX(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
-}
-
-.sidebar-toggle-btn:active {
-    transform: translateX(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 /* Smooth transitions for grid columns */
@@ -126,29 +113,12 @@
     overflow-y: hidden;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1279px) {
-    .sidebar-toggle-btn {
-        top: 20px;
-        right: 20px;
-    }
+/* Hide main content when table is expanded */
+.fixed.inset-0 {
+    z-index: 40;
+}
 
-    /* On mobile, hide sidebar and show toggle button more prominently */
-    .xl\:col-span-3 {
-        position: fixed;
-        top: 0;
-        right: 0;
-        height: 100vh;
-        width: 320px;
-        z-index: 40;
-        background: white;
-        box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
-    }
-
-    .sidebar-toggle-btn {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 50;
-    }
+/* Ensure table scrolls properly in expanded mode */
+.fixed.inset-0 .flex-1.overflow-auto {
+    max-height: calc(100vh - 240px);
 }

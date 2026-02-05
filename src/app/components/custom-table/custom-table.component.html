@@ -1,0 +1,248 @@
+<div class="custom-table-wrapper">
+  <!-- Toast for messages -->
+  <p-toast position="top-right"></p-toast>
+
+  <!-- Toolbar -->
+  <div class="table-toolbar" *ngIf="selectedRows.length > 0 || config.editable">
+    <div class="toolbar-left">
+      <!-- Selection Info -->
+      <div *ngIf="selectedRows.length > 0" class="selection-badge">
+        <i class="pi pi-check-circle"></i>
+        <span>{{ selectedRows.length }} selected</span>
+        <button 
+          pButton 
+          icon="pi pi-times" 
+          class="p-button-text p-button-sm clear-btn" 
+          (click)="clearSelection()"
+          pTooltip="Clear selection">
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-right">
+      <!-- Export Button -->
+      <button
+        pButton
+        icon="pi pi-download"
+        [label]="getExportLabel()"
+        class="export-btn"
+        (click)="exportToCSV()">
+      </button>
+
+      <!-- Add Row (Editable mode only) -->
+      <button
+        *ngIf="config.editable"
+        pButton
+        icon="pi pi-plus"
+        label="Add Row"
+        class="add-row-btn"
+        (click)="addNewRow()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div class="table-container">
+    <table class="custom-table">
+      <!-- Header -->
+      <thead>
+        <tr>
+          <!-- Select Column -->
+          <th *ngIf="config.showSelectButton" class="select-column">
+            <div class="select-header"></div>
+          </th>
+
+          <!-- Row Number Column -->
+          <th *ngIf="config.showRowNumbers" class="row-number-column">
+            <div class="header-content">#</div>
+          </th>
+
+          <!-- Data Columns -->
+          <th *ngFor="let column of columns" [style.width]="column.width">
+            <div class="header-content">{{ column.header }}</div>
+          </th>
+
+          <!-- Expand Button in Header (Right Side) -->
+          <th class="expand-header-th">
+            <button 
+              class="header-expand-btn"
+              (click)="onExpandButtonClick.emit()"
+              pTooltip="Expand table"
+              tooltipPosition="left">
+              <i class="pi pi-window-maximize"></i>
+            </button>
+          </th>
+        </tr>
+      </thead>
+
+      <!-- Body -->
+      <tbody>
+        <!-- Empty State (only show if table is not editable and has no data) -->
+        <tr *ngIf="displayData.length === 0 && !config.editable" class="empty-row">
+          <td [attr.colspan]="columns.length + (config.showSelectButton ? 1 : 0) + (config.showRowNumbers ? 1 : 0) + 1">
+            <div class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <p>No data available</p>
+              <button 
+                *ngIf="config.editable" 
+                pButton 
+                label="Add First Row" 
+                icon="pi pi-plus"
+                class="p-button-sm"
+                (click)="addNewRow()">
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Data Rows -->
+        <tr 
+          *ngFor="let row of displayData; let i = index; trackBy: trackByRowId"
+          [class.selected-row]="isRowSelected(row)"
+          [class.parent-row]="isParentRow(row)"
+          [class.child-row]="isChildRow(row)">
+
+          <!-- Select Button -->
+          <td *ngIf="config.showSelectButton" class="select-column !bg-white">
+            <button 
+              class="select-btn "
+              [class.selected]="isRowSelected(row)"
+              (click)="toggleRowSelection(row)">
+              <i class="pi pi-check" *ngIf="isRowSelected(row)"></i>
+            </button>
+          </td>
+
+          <!-- Row Number -->
+          <td *ngIf="config.showRowNumbers" class="row-number-column">
+            <div class="row-number">
+              {{ getDisplayRowNumber(row) }}
+            </div>
+          </td>
+
+          <!-- Data Cells -->
+          <td *ngFor="let column of columns" 
+              [class.editable-cell]="config.editable && column.editable !== false"
+              (click)="config.editable && column.editable !== false && startEdit(row, column.field)">
+            
+            <!-- Normal Display -->
+            <div *ngIf="!isEditing(row, column.field)" class="cell-content">
+              {{ row[column.field] }}
+            </div>
+
+            <!-- Edit Mode -->
+            <input
+              *ngIf="isEditing(row, column.field)"
+              type="text"
+              class="cell-input"
+              [(ngModel)]="tempEditValue"
+              (blur)="saveEdit(row, column.field)"
+              (keydown)="onKeyDown($event, row, column.field)"
+              [attr.autofocus]="true">
+          </td>
+        </tr>
+
+        <!-- Placeholder rows for empty table in editable mode -->
+        <ng-container *ngIf="config.editable && displayData.length === 0">
+          <tr *ngFor="let _ of [].constructor(10); let i = index" class="placeholder-row">
+            <td *ngIf="config.showSelectButton" class="select-column">
+              <div class="empty-cell"></div>
+            </td>
+            <td *ngIf="config.showRowNumbers" class="row-number-column">
+              <div class="row-number">{{ i + 1 }}</div>
+            </td>
+            <td *ngFor="let column of columns">
+              <div class="empty-cell"></div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="table-pagination" *ngIf="config.pagination && data.length > 0">
+    <div class="pagination-info">
+      Showing {{ (currentPage - 1) * (config.pageSize || 20) + 1 }} to 
+      {{ Math.min(currentPage * (config.pageSize || 20), data.length) }} of 
+      {{ data.length }} entries
+    </div>
+
+    <div class="pagination-controls">
+      <button 
+        pButton 
+        icon="pi pi-angle-left" 
+        class="p-button-text p-button-sm"
+        [disabled]="currentPage === 1"
+        (click)="previousPage()">
+      </button>
+
+      <button
+        *ngFor="let page of getPageNumbers()"
+        pButton
+        [label]="page.toString()"
+        class="p-button-text p-button-sm page-btn"
+        [class.active-page]="page === currentPage"
+        (click)="goToPage(page)">
+      </button>
+
+      <button 
+        pButton 
+        icon="pi pi-angle-right" 
+        class="p-button-text p-button-sm"
+        [disabled]="currentPage === totalPages"
+        (click)="nextPage()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Action Dialog (Always visible, no text when no selection) -->
+  <div 
+    *ngIf="config.editable" 
+    class="floating-actions-dialog">
+    <div class="floating-actions-content">
+      <span class="selection-count" *ngIf="selectedRows.length > 0">{{ selectedRows.length }} Selected</span>
+
+      <div class="action-buttons">
+        <!-- Save -->
+        <button 
+          pButton 
+          icon="pi pi-save" 
+          class="p-button-text action-btn"
+          (click)="saveSelectedRows()"
+          pTooltip="Save Selected"
+          tooltipPosition="top">
+        </button>
+
+        <!-- Swap Parent/Child -->
+        <button 
+          pButton 
+          icon="pi pi-sort-alt" 
+          class="p-button-text action-btn"
+          (click)="swapParentChild()"
+          pTooltip="Swap Parent with Child"
+          tooltipPosition="top">
+        </button>
+
+        <!-- Assign as Parent -->
+        <button 
+          pButton 
+          icon="pi pi-arrow-up" 
+          class="p-button-text action-btn"
+          (click)="assignAsParent()"
+          pTooltip="Assign as Parent"
+          tooltipPosition="top">
+        </button>
+
+        <!-- Delete -->
+        <button 
+          pButton 
+          icon="pi pi-trash" 
+          class="p-button-text action-btn delete-btn"
+          (click)="deleteSelectedRows()"
+          pTooltip="Delete Selected"
+          tooltipPosition="top">
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

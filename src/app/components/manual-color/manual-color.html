@@ -8,34 +8,237 @@
             <div class="flex flex-wrap items-center gap-3">
                 <!-- Search input with icon -->
                 <div class="relative !rounded-2xl">
-                    <input type="text" pInputText [(ngModel)]="searchText" placeholder="Search Message ID" class="p-inputtext-sm w-64 bg-gray-100 border border-gray-200 pl-10 focus:ring-2 focus:ring-gray-300" />
-                    <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input 
+                        type="text" 
+                        pInputText 
+                        [(ngModel)]="searchText" 
+                        placeholder="Search Message ID" 
+                        class="p-inputtext-sm w-64 bg-gray-100 border border-gray-200 pl-10 focus:ring-2 focus:ring-gray-300" 
+                    />
+                    <i class="pi pi-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 </div>
-                <!-- Buttons without borders, gray background, increased roundness -->
-                <button pButton label="Add New" icon="pi pi-plus-circle" class="p-button-sm !bg-gray-100 !rounded-2xl hover:bg-gray-100 !px-5 !py-3 !text-black !border-none"></button>
-                <button pButton label="Run Rules" icon="pi pi-cog" class="p-button-sm !bg-gray-100 !rounded-2xl hover:bg-gray-100 !px-5 !py-3 !text-black !border-none"></button>
-                <button pButton label="Filters" icon="pi pi-filter" class="p-button-sm !bg-gray-100 !rounded-2xl hover:bg-gray-100 !px-5 !py-3 !text-black !border-none"></button>
-                <button pButton label="Import via Excel" icon="pi pi-upload" class="p-button-sm !bg-gray-100 !rounded-2xl hover:bg-gray-100 !px-5 !py-3 !text-black !border-none" (click)="openImportDialog()"></button>
+
+                <!-- Action Buttons -->
+                <button 
+                    pButton 
+                    label="Add New" 
+                    icon="pi pi-plus-circle" 
+                    class="p-button-sm !bg-gray-100 !rounded-2xl hover:bg-gray-200 !px-5 !py-3 !text-black !border-none"
+                    (click)="addNewRow()">
+                </button>
+
+                <button 
+                    pButton 
+                    label="Run Rules" 
+                    icon="pi pi-cog" 
+                    class="p-button-sm !bg-gray-100 !rounded-2xl hover:bg-gray-200 !px-5 !py-3 !text-black !border-none"
+                    (click)="runAutomation()">
+                </button>
+
+                <button 
+                    pButton 
+                    label="Filters" 
+                    icon="pi pi-filter" 
+                    class="p-button-sm !bg-gray-100 !rounded-2xl hover:bg-gray-200 !px-5 !py-3 !text-black !border-none"
+                    (click)="showFilters()">
+                </button>
+
+                <button 
+                    pButton 
+                    label="Import via Excel" 
+                    icon="pi pi-upload" 
+                    class="p-button-sm !bg-gray-100 !rounded-2xl hover:bg-gray-200 !px-5 !py-3 !text-black !border-none" 
+                    (click)="openImportDialog()">
+                </button>
             </div>
+
             <div class="flex items-center gap-4">
-                <div class="text-sm text-gray-600">Total Count: <strong>{{ colors.length }}</strong></div>
-                <button pButton label="Run Automation" icon="pi pi-play" class="p-button-sm bg-black hover:bg-gray-800 text-white border-0 rounded-lg px-4 py-2" (click)="runAutomation()"></button>
+                <div class="text-sm text-gray-600">
+                    Total Count: <strong>{{ tableData.length }}</strong>
+                </div>
+                <button 
+                    pButton 
+                    label="Run Automation" 
+                    icon="pi pi-save"
+                    class="p-button-sm bg-black hover:bg-gray-800 text-white border-0 rounded-4xl px-4 py-2" 
+                    (click)="runAutomation()">
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- TABULATOR TABLE - EDITABLE -->
-    <app-tabulator-table [config]="tabulatorConfig" [initialData]="colors" (dataChanged)="onTableDataChanged($event)" (dataLoaded)="onTableDataLoaded($event)" (rowSelected)="onTableRowSelected($event)"></app-tabulator-table>
+    <!-- CUSTOM TABLE - EDITABLE -->
+    <app-custom-table
+        [columns]="tableColumns"
+        [data]="tableData"
+        [config]="tableConfig"
+        (dataChanged)="onTableDataChanged($event)"
+        (rowsSelected)="onTableRowsSelected($event)"
+        (cellEdited)="onCellEdited($event)"
+        (onExpandButtonClick)="toggleTableExpansion()">
+    </app-custom-table>
 
-    <!-- File Import Dialog -->
-    <p-dialog header="Import Color File" [(visible)]="showImportDialog" [modal]="true" [ngStyle]="{'width': '400px'}" [closable]="false">
-        <div class="flex flex-col items-center justify-center text-center space-y-4 py-6">
-            <i class="pi pi-upload text-4xl text-gray-400"></i>
-            <p class="text-gray-600 text-sm">Drop your CSV or Excel file here to import color data.</p>
+    <!-- ============ IMPROVED FILE IMPORT DIALOG ============ -->
+    <p-dialog 
+        header="Manual Color Import"
+        [(visible)]="showImportDialog" 
+        [modal]="true" 
+        [style]="{'width': '500px'}" 
+        [closable]="true"
+        [showHeader]="true"
+        class="import-dialog">
+        
+        <div class="import-dialog-content">
+            <!-- Description -->
+            <p class="text-sm text-gray-600 mb-6 font-medium">
+                Add manual color excel files, you can upload up to 5 excel files
+            </p>
 
-            <p-fileUpload mode="basic" name="colorFile" accept=".csv,.xlsx" chooseLabel="Select File" (onSelect)="onUpload($event)"></p-fileUpload>
+            <!-- Drop Zone -->
+            <div class="drop-zone" *ngIf="!selectedFile || !isUploading">
+                <div class="drop-zone-content">
+                    <!-- Loading spinner -->
+                    <p-progressSpinner 
+                        *ngIf="isUploading"
+                        [style]="{width: '50px', height: '50px'}" 
+                        strokeWidth="4"
+                        class="mb-4">
+                    </p-progressSpinner>
 
-            <button pButton label="Cancel" class="p-button-outlined p-button-sm !p-4" (click)="onCancelUpload()"></button>
+                    <!-- Upload icon (when not loading) -->
+                    <i 
+                        *ngIf="!isUploading"
+                        class="pi pi-cloud-upload text-3xl text-green-500 mb-3">
+                    </i>
+
+                    <!-- Status text -->
+                    <p class="text-sm font-medium text-gray-700 mb-2">
+                        {{ isUploading ? 'Uploading...' : 'Drop your file here' }}
+                    </p>
+
+                    <!-- Native file input (hidden) -->
+                    <input 
+                        *ngIf="!isUploading"
+                        #fileInputRef
+                        type="file"
+                        accept=".xlsx,.xls"
+                        style="display: none;"
+                        (change)="onNativeFileSelect($event)">
+
+                    <!-- Browse button -->
+                    <button 
+                        *ngIf="!isUploading"
+                        pButton 
+                        label="Browse Files"
+                        icon="pi pi-folder-open"
+                        class="p-button-outlined p-button-sm browse-btn"
+                        (click)="triggerFileInput()">
+                    </button>
+                </div>
+            </div>
+
+            <!-- File info (when file is selected) -->
+            <div *ngIf="selectedFile && !isUploading" class="file-info-section">
+                <div class="file-info-box">
+                    <div class="file-info-left">
+                        <i [class]="'pi ' + getFileIcon() + ' text-2xl text-blue-500'"></i>
+                    </div>
+                    <div class="file-info-details">
+                        <p class="file-name">{{ selectedFile.name }}</p>
+                        <p class="file-size">{{ fileSize }}</p>
+                    </div>
+                    <button 
+                        pButton 
+                        icon="pi pi-times"
+                        class="p-button-text p-button-sm remove-file-btn"
+                        (click)="onCancelUpload()"
+                        pTooltip="Remove file">
+                    </button>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="divider"></div>
+
+            <!-- Info text -->
+            <p class="text-xs text-gray-500 text-center mb-6">
+                Only support .xlsx or .csv extensions
+            </p>
+
+            <!-- Action Buttons -->
+            <div class="dialog-actions">
+                <button 
+                    pButton 
+                    label="Cancel" 
+                    icon="pi pi-times"
+                    class="p-button-outlined p-button-sm cancel-btn"
+                    (click)="onCancelUpload()"
+                    [disabled]="isUploading">
+                </button>
+                
+                <button 
+                    pButton 
+                    label="Import"
+                    icon="pi pi-upload"
+                    class="p-button-sm import-btn"
+                    (click)="onUpload()"
+                    [disabled]="!selectedFile || isUploading">
+                </button>
+            </div>
         </div>
     </p-dialog>
+
+    <!-- Filter Dialog Component -->
+    <app-filter-dialog
+        [(visible)]="showFilterDialog"
+        (filtersApplied)="onFiltersApplied($event)">
+    </app-filter-dialog>
+
+    <!-- ================= EXPANDED TABLE VIEW ================= -->
+    <div *ngIf="isTableExpanded" class="fixed inset-0 bg-white z-40 flex flex-col"
+        [ngStyle]="{'padding-top': '64px', 'padding-left': '0px'}">
+        <!-- MINIMIZE BUTTON AT TOP-RIGHT -->
+        <div class="absolute top-6 right-6 z-50">
+            <button pButton icon="pi pi-compress"
+                class="minimize-table-btn !bg-gray-900 !text-white hover:!bg-black !border !border-gray-900 !w-10 !h-10 !p-0 !rounded-lg"
+                (click)="toggleTableExpansion()" 
+                pTooltip="Minimize table" 
+                tooltipPosition="left">
+            </button>
+        </div>
+
+        <!-- SEARCH / FILTERS BAR IN EXPANDED VIEW (at top) -->
+        <div class="bg-white border-b border-gray-200 p-5">
+            <div class="max-w-[1800px] mx-auto">
+                <!-- Top Controls -->
+                <div class="flex flex-col sm:flex-row flex-wrap items-center gap-4">
+                    <!-- Search -->
+                    <div class="relative w-full sm:w-64">
+                        <input pInputText type="text" placeholder="Search Message ID"
+                            class="w-full !rounded-full !px-5 !py-2.5 !bg-gray-50 !text-gray-700 !border !border-gray-300 hover:!bg-gray-100" />
+                        <i
+                            class="pi pi-search absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                    </div>
+
+                    <!-- Spacer -->
+                    <div class="flex-1"></div>
+
+                    <!-- Total Count -->
+                    <div
+                        class="flex items-center gap-3 px-5 py-2.5 rounded-full border border-gray-300 bg-gray-50 text-gray-700 font-medium">
+                        <span>Total Count</span>
+                        <span class="px-3 py-0.5 bg-white rounded-full shadow text-sm font-semibold"> {{
+                            tableData.length }} </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE IN EXPANDED MODE -->
+        <div class="flex-1 overflow-auto px-6 py-4">
+            <app-custom-table [columns]="tableColumns" [data]="tableData" [config]="tableConfig"
+                (dataChanged)="onTableDataChanged($event)" (rowsSelected)="onTableRowsSelected($event)">
+            </app-custom-table>
+        </div>
+    </div>
 </div>
