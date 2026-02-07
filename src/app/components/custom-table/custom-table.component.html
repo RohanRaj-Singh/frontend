@@ -60,6 +60,11 @@
             </button>
           </th>
 
+          <!-- Row Number Column -->
+          <th *ngIf="config.showRowNumbers" class="row-number-column">
+            <div class="header-content">#</div>
+          </th>
+
           <!-- Data Columns -->
           <th *ngFor="let column of columns" [style.width]="column.width">
             <div class="header-content">{{ column.header }}</div>
@@ -82,7 +87,7 @@
       <tbody>
         <!-- Empty State -->
         <tr *ngIf="displayData.length === 0 && !config.editable" class="empty-row">
-          <td [attr.colspan]="columns.length + (config.showSelectButton ? 1 : 0) + 1">
+          <td [attr.colspan]="columns.length + (config.showSelectButton ? 1 : 0) + (config.showRowNumbers ? 1 : 0) + 1">
             <div class="empty-state">
               <i class="pi pi-inbox"></i>
               <p>No data available</p>
@@ -107,6 +112,11 @@
               (click)="$event.stopPropagation(); toggleRowSelection(row)">
               <i class="pi pi-check" *ngIf="isRowSelected(row)"></i>
             </button>
+          </td>
+
+          <!-- Row Number Cell -->
+          <td *ngIf="config.showRowNumbers" class="row-number-column">
+            <div class="row-number">{{ getDisplayRowNumber(row) }}</div>
           </td>
 
           <!-- Data Cells -->
@@ -158,6 +168,9 @@
         <ng-container *ngIf="config.editable && displayData.length === 0">
           <tr *ngFor="let _ of [].constructor(10); let i = index" class="placeholder-row">
             <td *ngIf="config.showSelectButton" class="select-column">
+              <div class="empty-cell"></div>
+            </td>
+            <td *ngIf="config.showRowNumbers" class="row-number-column">
               <div class="empty-cell"></div>
             </td>
             <td *ngFor="let column of columns">

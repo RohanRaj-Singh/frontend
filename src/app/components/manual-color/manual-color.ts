@@ -10,8 +10,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { CustomTableComponent, TableColumn, TableRow, TableConfig } from '../custom-table/custom-table.component';
-import { FilterDialogComponent } from '../filter-dialog/filter-dialog.component';
-import { ApiService } from '../../services/api.service';
+import { FilterDialogComponent, FilterCondition } from '../filter-dialog/filter-dialog.component';
+import { ApiService, SearchFilter } from '../../services/api.service';
 
 @Component({
   selector: 'app-manual-color',
@@ -46,7 +46,10 @@ export class ManualColor implements OnInit {
   
   // Session management
   currentSessionId: string | null = null;
-  
+
+  // Active filters for display as chips
+  activeFilters: FilterCondition[] = [];
+
   // Table data
   tableData: TableRow[] = [];
   
@@ -68,7 +71,7 @@ export class ManualColor implements OnInit {
     editable: true,
     selectable: true,
     showSelectButton: true,
-    showRowNumbers: false,
+    showRowNumbers: true,
     pagination: false,
     pageSize: 20
   };
@@ -380,12 +383,87 @@ export class ManualColor implements OnInit {
     this.showFilterDialog = true;
   }
 
-  onFiltersApplied(filters: any) {
+  onFiltersApplied(filters: { conditions: FilterCondition[]; subgroups: any[] }) {
     console.log('✅ Filters applied:', filters);
+
+    // Collect all valid conditions
+    const allConditions: FilterCondition[] = [...filters.conditions];
+    if (filters.subgroups) {
+      for (const sg of filters.subgroups) {
+        allConditions.push(...sg.conditions);
+      }
+    }
+
+    this.activeFilters = allConditions;
+
+    if (allConditions.length === 0) {
+      return;
+    }
+
+    // Build SearchFilter array for the backend
+    const searchFilters: SearchFilter[] = allConditions.map(c => ({
+      field: c.column,
+      operator: c.operator,
+      value: c.values,
+      value2: c.values2 || undefined
+    }));
+
+    console.log('📡 Calling backend search with filters:', searchFilters);
+
+    this.apiService.searchColors(searchFilters, 0, 500).subscribe({
+      next: (response) => {
+        console.log('✅ Search results:', response.total_count, 'records');
+
+        this.tableData = response.results.map((record: any, index: number) => ({
+          _rowId: `row_${record.MESSAGE_ID || index}`,
+          _selected: false,
+          rowNumber: String(index + 1),
+          messageId: String(record.MESSAGE_ID || ''),
+          ticker: record.TICKER || '',
+          cusip: record.CUSIP || '',
+          bias: record.BIAS || '',
+          date: record.DATE ? new Date(record.DATE).toLocaleDateString() : '',
+          bid: record.BID || 0,
+          mid: ((record.BID || 0) + (record.ASK || 0)) / 2,
+          ask: record.ASK || 0,
+          px: record.PX || 0,
+          source: record.SOURCE || '',
+          rank: record.RANK || 5,
+          isParent: record.IS_PARENT ?? true,
+          parentRow: record.PARENT_MESSAGE_ID || undefined,
+          childrenCount: record.CHILDREN_COUNT || 0
+        }));
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Filters Applied',
+          detail: `Found ${response.total_count} matching record(s)`
+        });
+      },
+      error: (error) => {
+        console.error('❌ Search error:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Filter Error',
+          detail: 'Failed to apply filters'
+        });
+      }
+    });
+  }
+
+  removeFilter(index: number) {
+    this.activeFilters.splice(index, 1);
+    if (this.activeFilters.length > 0) {
+      this.onFiltersApplied({ conditions: this.activeFilters, subgroups: [] });
+    }
+  }
+
+  removeAllActiveFilters() {
+    this.activeFilters = [];
     this.messageService.add({
-      severity: 'success',
-      summary: 'Filters Applied',
-      detail: `${filters.conditions.length} filter(s) applied`
+      severity: 'info',
+      summary: 'Filters Cleared',
+      detail: 'All filters removed'
     });
   }
 }

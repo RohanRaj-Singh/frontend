@@ -1,14 +1,18 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
 
+
 export interface FilterCondition {
-  column: string;
-  operator: string;
+  column: string;        // Backend column name (e.g. 'CUSIP', 'TICKER')
+  columnDisplay: string; // Frontend display name (e.g. 'CUSIP', 'Ticker')
+  operator: string;      // Backend operator (e.g. 'equals', 'contains')
+  operatorDisplay: string; // Frontend display label (e.g. 'Equal to', 'Contains')
   values: string;
+  values2?: string;      // For 'between' operator
   logicalOperator: 'AND' | 'OR';
 }
 
@@ -17,6 +21,27 @@ export interface FilterSubgroup {
   logicalOperator: 'AND' | 'OR';
   conditions: FilterCondition[];
 }
+
+// Column mapping: frontend display name -> backend oracle column name
+const COLUMN_MAPPING: { [key: string]: string } = {
+  'Message ID': 'MESSAGE_ID',
+  'Ticker': 'TICKER',
+  'CUSIP': 'CUSIP',
+  'Bias': 'BIAS',
+  'Date': 'DATE',
+  'Source': 'SOURCE',
+  'Sector': 'SECTOR',
+  'Rank': 'RANK',
+  'Price': 'PRICE_LEVEL',
+  'BID': 'BID',
+  'ASK': 'ASK',
+  'PX': 'PX',
+  'Bwic Cover': 'BWIC_COVER',
+  'Confidence': 'CONFIDENCE',
+  'Cov Price': 'COV_PRICE',
+  'Percent Diff': 'PERCENT_DIFF',
+  'Price Diff': 'PRICE_DIFF'
+};
 
 @Component({
   selector: 'app-filter-dialog',
@@ -31,7 +56,7 @@ export interface FilterSubgroup {
   templateUrl: './filter-dialog.component.html',
   styleUrls: ['./filter-dialog.component.css']
 })
-export class FilterDialogComponent {
+export class FilterDialogComponent implements OnInit {
   @Input() visible: boolean = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() filtersApplied = new EventEmitter<{
@@ -43,9 +68,9 @@ export class FilterDialogComponent {
   filterConditions: FilterCondition[] = [];
   filterSubgroups: FilterSubgroup[] = [];
 
-  // Options
+  // Column options (display names)
   columnOptions = [
-    'Bwic Cover',
+    'Message ID',
     'Ticker',
     'CUSIP',
     'Bias',
@@ -53,17 +78,25 @@ export class FilterDialogComponent {
     'Source',
     'Sector',
     'Rank',
-    'Price'
+    'Price',
+    'BID',
+    'ASK',
+    'PX',
+    'Bwic Cover'
   ];
 
+  // Operators aligned with backend (search.py + rules_service.py)
   operatorOptions = [
-    { label: 'Equal to', value: 'eq' },
-    { label: 'Not equal to', value: 'neq' },
+    { label: 'Equal to', value: 'equals' },
+    { label: 'Not equal to', value: 'not equal to' },
     { label: 'Contains', value: 'contains' },
-    { label: 'Starts with', value: 'startsWith' },
-    { label: 'Ends with', value: 'endsWith' },
+    { label: 'Starts with', value: 'starts_with' },
+    { label: 'Ends with', value: 'ends with' },
     { label: 'Greater than', value: 'gt' },
-    { label: 'Less than', value: 'lt' }
+    { label: 'Less than', value: 'lt' },
+    { label: 'Greater than or equal', value: 'gte' },
+    { label: 'Less than or equal', value: 'lte' },
+    { label: 'Between', value: 'between' }
   ];
 
   logicalOperators = [
@@ -72,10 +105,22 @@ export class FilterDialogComponent {
   ];
 
   ngOnInit() {
-    // Initialize with one condition
     if (this.filterConditions.length === 0) {
       this.addCondition();
     }
+  }
+
+  // ==================== COLUMN MAPPING ====================
+
+  /** Map a frontend column display name to a backend oracle column name */
+  getBackendColumn(displayName: string): string {
+    return COLUMN_MAPPING[displayName] || displayName.toUpperCase();
+  }
+
+  /** Get operator display label from value */
+  getOperatorLabel(value: string): string {
+    const operator = this.operatorOptions.find(op => op.value === value);
+    return operator ? operator.label : value;
   }
 
   // ==================== MAIN CONDITIONS ====================
@@ -83,7 +128,9 @@ export class FilterDialogComponent {
   addCondition() {
     this.filterConditions.push({
       column: '',
+      columnDisplay: '',
       operator: '',
+      operatorDisplay: '',
       values: '',
       logicalOperator: 'AND'
     });
@@ -104,7 +151,9 @@ export class FilterDialogComponent {
       logicalOperator: 'AND',
       conditions: [{
         column: '',
+        columnDisplay: '',
         operator: '',
+        operatorDisplay: '',
         values: '',
         logicalOperator: 'AND'
       }]
@@ -123,7 +172,9 @@ export class FilterDialogComponent {
     if (subgroup) {
       subgroup.conditions.push({
         column: '',
+        columnDisplay: '',
         operator: '',
+        operatorDisplay: '',
         values: '',
         logicalOperator: 'AND'
       });
@@ -149,12 +200,30 @@ export class FilterDialogComponent {
   }
 
   applyFilters() {
-    const filters = {
-      conditions: this.filterConditions,
-      subgroups: this.filterSubgroups
-    };
-    
-    this.filtersApplied.emit(filters);
+    // Map conditions: set backend column names and operator display labels
+    const mappedConditions = this.filterConditions
+      .filter(c => c.columnDisplay && c.operator && c.values)
+      .map(c => ({
+        ...c,
+        column: this.getBackendColumn(c.columnDisplay),
+        operatorDisplay: this.getOperatorLabel(c.operator)
+      }));
+
+    const mappedSubgroups = this.filterSubgroups.map(sg => ({
+      ...sg,
+      conditions: sg.conditions
+        .filter(c => c.columnDisplay && c.operator && c.values)
+        .map(c => ({
+          ...c,
+          column: this.getBackendColumn(c.columnDisplay),
+          operatorDisplay: this.getOperatorLabel(c.operator)
+        }))
+    }));
+
+    this.filtersApplied.emit({
+      conditions: mappedConditions,
+      subgroups: mappedSubgroups
+    });
     this.closeDialog();
   }
 
@@ -163,10 +232,8 @@ export class FilterDialogComponent {
     this.visibleChange.emit(false);
   }
 
-  // ==================== HELPERS ====================
-
-  getOperatorLabel(value: string): string {
-    const operator = this.operatorOptions.find(op => op.value === value);
-    return operator ? operator.label : value;
+  /** Check if operator is 'between' (needs two value inputs) */
+  isBetweenOperator(operator: string): boolean {
+    return operator === 'between';
   }
 }

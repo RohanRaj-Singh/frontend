@@ -130,6 +130,44 @@
   background: #ffffff;
 }
 
+/* Row Number Column */
+.row-number-column {
+  width: 60px !important;
+  text-align: center !important;
+  position: sticky;
+  left: 60px;
+  z-index: 11;
+  background: #ffffff;
+}
+
+.row-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Row number sticky background per row type */
+.custom-table td.row-number-column {
+  position: sticky;
+  left: 60px;
+  z-index: 5;
+  background: #ffffff;
+}
+
+.custom-table tr.parent-row td.row-number-column {
+  background: #ffffff;
+}
+
+.custom-table tr.child-row td.row-number-column {
+  background: #f3f4f6;
+}
+
+.custom-table tr.selected-row td.row-number-column {
+  background: #eff6ff;
+}
+
 /* Expand button in header */
 .expand-header-th {
   width: 48px !important;

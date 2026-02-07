@@ -8,8 +8,8 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { CustomTableComponent, TableColumn, TableRow, TableConfig } from '../custom-table/custom-table.component';
-import { FilterDialogComponent } from '../filter-dialog/filter-dialog.component';
-import { ApiService, ColorProcessed } from '../../services/api.service';
+import { FilterDialogComponent, FilterCondition } from '../filter-dialog/filter-dialog.component';
+import { ApiService, ColorProcessed, SearchFilter } from '../../services/api.service';
 import { StackedChartComponent } from '../stacked-chart/stacked-chart.component';
 
 @Component({
@@ -39,6 +39,9 @@ export class Home implements OnInit {
     filterVisible: boolean = false;
     isTableExpanded: boolean = false;
 
+    // Active filters for display as chips
+    activeFilters: FilterCondition[] = [];
+
     // Table data
     tableData: TableRow[] = [];
     selectedRows: TableRow[] = [];
@@ -61,7 +64,7 @@ export class Home implements OnInit {
         editable: false,       // READ ONLY on home page
         selectable: true,
         showSelectButton: true,
-        showRowNumbers: false,
+        showRowNumbers: true,
         pagination: true,
         pageSize: 20
     };
@@ -358,18 +361,88 @@ export class Home implements OnInit {
         this.filterVisible = true;
     }
 
-    onFiltersApplied(filters: any) {
+    onFiltersApplied(filters: { conditions: FilterCondition[]; subgroups: any[] }) {
         console.log('✅ Filters applied:', filters);
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Filters Applied',
-            detail: `${filters.conditions.length} filter(s) applied`
+
+        // Collect all valid conditions (main + subgroups)
+        const allConditions: FilterCondition[] = [...filters.conditions];
+        if (filters.subgroups) {
+            for (const sg of filters.subgroups) {
+                allConditions.push(...sg.conditions);
+            }
+        }
+
+        this.activeFilters = allConditions;
+
+        if (allConditions.length === 0) {
+            this.loadDataFromBackend();
+            return;
+        }
+
+        // Build SearchFilter array for the backend API
+        const searchFilters: SearchFilter[] = allConditions.map(c => ({
+            field: c.column,
+            operator: c.operator,
+            value: c.values,
+            value2: c.values2 || undefined
+        }));
+
+        console.log('📡 Calling backend search with filters:', searchFilters);
+
+        this.apiService.searchColors(searchFilters, 0, 500).subscribe({
+            next: (response) => {
+                console.log('✅ Search results:', response.total_count, 'records');
+
+                this.tableData = response.results.map((record: any, index: number) => ({
+                    _rowId: `row_${record.MESSAGE_ID || index}`,
+                    _selected: false,
+                    rowNumber: String(index + 1),
+                    messageId: String(record.MESSAGE_ID || ''),
+                    ticker: record.TICKER || '',
+                    cusip: record.CUSIP || '',
+                    bias: record.BIAS || '',
+                    date: record.DATE ? new Date(record.DATE).toLocaleDateString() : '',
+                    bid: record.BID || 0,
+                    mid: ((record.BID || 0) + (record.ASK || 0)) / 2,
+                    ask: record.ASK || 0,
+                    px: record.PX || 0,
+                    source: record.SOURCE || '',
+                    rank: record.RANK || 5,
+                    isParent: record.IS_PARENT ?? true,
+                    parentRow: record.PARENT_MESSAGE_ID || undefined,
+                    childrenCount: record.CHILDREN_COUNT || 0
+                }));
+
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Filters Applied',
+                    detail: `Found ${response.total_count} matching record(s)`
+                });
+            },
+            error: (error) => {
+                console.error('❌ Search error:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Filter Error',
+                    detail: 'Failed to apply filters. Loading all data instead.'
+                });
+                this.loadDataFromBackend();
+            }
         });
-        // Reload data with filters
-        this.loadDataFromBackend();
+    }
+
+    removeFilter(index: number) {
+        this.activeFilters.splice(index, 1);
+        if (this.activeFilters.length === 0) {
+            this.loadDataFromBackend();
+        } else {
+            // Re-apply remaining filters
+            this.onFiltersApplied({ conditions: this.activeFilters, subgroups: [] });
+        }
     }
 
     removeAllFilters() {
+        this.activeFilters = [];
         this.messageService.add({
             severity: 'info',
             summary: 'Filters Cleared',
@@ -381,8 +454,8 @@ export class Home implements OnInit {
     // ==================== HELPERS ====================
 
     getExportButtonLabel(): string {
-        return this.selectedRows.length > 0 
-            ? `Export Selected (${this.selectedRows.length})` 
+        return this.selectedRows.length > 0
+            ? `Export Selected (${this.selectedRows.length})`
             : 'Export All';
     }
 }

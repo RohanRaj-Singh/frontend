@@ -201,6 +201,62 @@ export interface ConnectionInfo {
     connection_status?: string;
 }
 
+// ==================== SEARCH / FILTER INTERFACES ====================
+
+export interface SearchFilter {
+    field: string;
+    operator: string;
+    value: any;
+    value2?: any;
+}
+
+export interface SearchRequest {
+    filters: SearchFilter[];
+    skip?: number;
+    limit?: number;
+    sort_by?: string;
+    sort_order?: string;
+    clo_id?: string;
+}
+
+export interface SearchResponse {
+    total_count: number;
+    returned_count: number;
+    page: number;
+    page_size: number;
+    results: any[];
+    available_fields: string[];
+}
+
+export interface SearchableField {
+    name: string;
+    display_name: string;
+    data_type: string;
+    required: boolean;
+    description: string;
+    searchable: boolean;
+}
+
+export interface SearchFieldsResponse {
+    version: string;
+    total_fields: number;
+    fields: SearchableField[];
+    clo_filtered: boolean;
+    supported_operators: { [key: string]: string[] };
+}
+
+export interface DashboardFilterParams {
+    cusip?: string;
+    ticker?: string;
+    message_id?: number;
+    asset_class?: string;
+    source?: string;
+    bias?: string;
+    processing_type?: string;
+    date_from?: string;
+    date_to?: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -428,6 +484,50 @@ export class ApiService {
             session_id: sessionId,
             user_id: userId
         });
+    }
+
+    // ==================== SEARCH / FILTER ENDPOINTS ====================
+
+    /**
+     * Generic search with multiple filters (POST /api/search/generic)
+     */
+    searchColors(filters: SearchFilter[], skip: number = 0, limit: number = 500, sortBy?: string, sortOrder?: string): Observable<SearchResponse> {
+        const body: SearchRequest = {
+            filters,
+            skip,
+            limit,
+            sort_by: sortBy,
+            sort_order: sortOrder || 'desc'
+        };
+        return this.http.post<SearchResponse>(`${this.baseUrl}/api/search/generic`, body);
+    }
+
+    /**
+     * Get all searchable fields from column config (GET /api/search/fields)
+     */
+    getSearchableFields(): Observable<SearchFieldsResponse> {
+        return this.http.get<SearchFieldsResponse>(`${this.baseUrl}/api/search/fields`);
+    }
+
+    /**
+     * Get colors with filter params via dashboard endpoint
+     */
+    getColorsFiltered(skip: number = 0, limit: number = 100, filters?: DashboardFilterParams): Observable<ColorResponse> {
+        let params = new HttpParams().set('skip', skip.toString()).set('limit', limit.toString());
+
+        if (filters) {
+            if (filters.cusip) params = params.set('cusip', filters.cusip);
+            if (filters.ticker) params = params.set('ticker', filters.ticker);
+            if (filters.message_id) params = params.set('message_id', filters.message_id.toString());
+            if (filters.asset_class) params = params.set('asset_class', filters.asset_class);
+            if (filters.source) params = params.set('source', filters.source);
+            if (filters.bias) params = params.set('bias', filters.bias);
+            if (filters.processing_type) params = params.set('processing_type', filters.processing_type);
+            if (filters.date_from) params = params.set('date_from', filters.date_from);
+            if (filters.date_to) params = params.set('date_to', filters.date_to);
+        }
+
+        return this.http.get<ColorResponse>(`${this.baseUrl}/api/dashboard/colors`, { params });
     }
 
     /**

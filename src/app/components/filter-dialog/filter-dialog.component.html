@@ -6,10 +6,10 @@
   [draggable]="false"
   [style]="{ width: '900px' }"
   class="filter-dialog">
-  
+
   <!-- Main Container -->
   <div class="bg-white rounded-[20px] overflow-hidden px-8 py-6">
-    
+
     <!-- Headers Row -->
     <div class="flex items-center gap-4 mb-6 px-4">
       <div class="w-20"></div>
@@ -20,9 +20,9 @@
     </div>
 
     <!-- Main Conditions -->
-    <div *ngFor="let condition of filterConditions; let i = index" 
+    <div *ngFor="let condition of filterConditions; let i = index"
          class="flex items-center gap-4 mb-3 px-4 py-3">
-      
+
       <!-- WHERE/AND Dropdown -->
       <div class="w-20">
         <span *ngIf="i === 0" class="text-sm font-medium text-gray-700">Where</span>
@@ -49,7 +49,7 @@
       <!-- Column Dropdown -->
       <div class="w-48">
         <select
-          [(ngModel)]="condition.column"
+          [(ngModel)]="condition.columnDisplay"
           class="w-full px-2 py-1.5 border border-gray-300 rounded bg-white">
           <option value="">Select Column</option>
           <option *ngFor="let col of columnOptions" [value]="col">{{ col }}</option>
@@ -67,11 +67,17 @@
       </div>
 
       <!-- Values Input -->
-      <div class="flex-1">
+      <div class="flex-1 flex gap-2">
         <input
           pInputText
           [(ngModel)]="condition.values"
-          placeholder="Enter value"
+          [placeholder]="isBetweenOperator(condition.operator) ? 'Min value' : 'Enter value'"
+          class="w-full" />
+        <input
+          *ngIf="isBetweenOperator(condition.operator)"
+          pInputText
+          [(ngModel)]="condition.values2"
+          placeholder="Max value"
           class="w-full" />
       </div>
 
@@ -88,7 +94,7 @@
 
     <!-- Filter Subgroups -->
     <div *ngFor="let subgroup of filterSubgroups" class="mb-6 pl-8">
-      
+
       <!-- Subgroup Header -->
       <div class="flex items-center gap-2 mb-3">
         <span class="text-sm font-medium text-gray-600">Group</span>
@@ -103,7 +109,7 @@
       <!-- Subgroup Conditions -->
       <div *ngFor="let condition of subgroup.conditions; let j = index"
            class="flex items-center gap-4 mb-3 px-4 py-3 bg-gray-50 rounded-lg">
-        
+
         <!-- WHERE/Logical Operator -->
         <div class="w-20">
           <span *ngIf="j === 0" class="text-sm text-gray-600">Where</span>
@@ -130,7 +136,7 @@
         <!-- Column -->
         <div class="w-48">
           <select
-            [(ngModel)]="condition.column"
+            [(ngModel)]="condition.columnDisplay"
             class="w-full px-2 py-1.5 border border-gray-300 rounded bg-white">
             <option value="">Select Column</option>
             <option *ngFor="let col of columnOptions" [value]="col">{{ col }}</option>
@@ -148,11 +154,17 @@
         </div>
 
         <!-- Values -->
-        <div class="flex-1">
+        <div class="flex-1 flex gap-2">
           <input
             pInputText
             [(ngModel)]="condition.values"
-            placeholder="Enter value"
+            [placeholder]="isBetweenOperator(condition.operator) ? 'Min value' : 'Enter value'"
+            class="w-full" />
+          <input
+            *ngIf="isBetweenOperator(condition.operator)"
+            pInputText
+            [(ngModel)]="condition.values2"
+            placeholder="Max value"
             class="w-full" />
         </div>
 

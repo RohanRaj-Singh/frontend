@@ -116,30 +116,33 @@ export class CustomTableComponent implements OnChanges, AfterViewChecked {
   // ==================== DISPLAY DATA ====================
 
   /**
-   * Build display data: in non-editable mode show only parent rows
-   * + children of expanded parents. In editable mode show everything.
+   * Build display data: show only parent rows by default.
+   * Children appear when their parent is expanded (chevron toggle).
+   * Works in both editable and non-editable modes.
    */
   private updateDisplayData() {
-    let visibleRows: TableRow[];
+    let visibleRows: TableRow[] = [];
 
-    if (this.config.editable) {
-      // Editable mode: show all rows, no pagination
-      visibleRows = [...this._processedData];
-    } else {
-      // Non-editable mode: only parents + expanded children
-      visibleRows = [];
-      for (const row of this._processedData) {
-        if (row.isParent === true) {
-          visibleRows.push(row);
-          // If this parent is expanded, add its children
-          if (this.expandedRows.has(row._rowId!)) {
-            const children = this._processedData.filter(
-              r => !r.isParent && r.parentRow !== undefined && r.parentRow !== null &&
-                   this.getParentRowId(r) === row._rowId
-            );
-            visibleRows.push(...children);
-          }
+    // Always show parent-only with expand/collapse
+    for (const row of this._processedData) {
+      if (row.isParent === true) {
+        visibleRows.push(row);
+        // If this parent is expanded, add its children
+        if (this.expandedRows.has(row._rowId!)) {
+          const children = this._processedData.filter(
+            r => !r.isParent && r.parentRow !== undefined && r.parentRow !== null &&
+                 this.getParentRowId(r) === row._rowId
+          );
+          visibleRows.push(...children);
         }
+      }
+    }
+
+    // If no rows have isParent set (e.g. all rows are flat), show everything
+    if (visibleRows.length === 0 && this._processedData.length > 0) {
+      const hasAnyParent = this._processedData.some(r => r.isParent === true);
+      if (!hasAnyParent) {
+        visibleRows = [...this._processedData];
       }
     }
 
@@ -623,6 +626,13 @@ export class CustomTableComponent implements OnChanges, AfterViewChecked {
       Object.assign(displayRow, data);
     }
     this.cdr.markForCheck();
+  }
+
+  /** Get the display row number for a row */
+  getDisplayRowNumber(row: TableRow): string {
+    const index = this.displayData.indexOf(row);
+    if (index < 0) return '';
+    return String(index + 1);
   }
 
   /** Get parent count for display */

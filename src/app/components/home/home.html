@@ -125,27 +125,21 @@
 
             <!-- Active Filters -->
             <div class="flex flex-wrap items-center gap-3 mt-5">
-                <!-- Filter Chip -->
-                <div
+                <!-- Dynamic Filter Chips -->
+                <div *ngFor="let filter of activeFilters; let i = index"
                     class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-gray-100 text-gray-900 border border-gray-200">
                     <i class="pi pi-filter text-gray-700"></i>
-                    <span class="text-sm font-medium whitespace-nowrap"> Color : Bwic Cover | Px : Less than 100 </span>
-                    <button class="text-red-500 hover:text-red-600" aria-label="Remove filter">
+                    <span class="text-sm font-medium whitespace-nowrap">
+                        {{ filter.columnDisplay }} : {{ filter.operatorDisplay }} {{ filter.values }}
+                        <span *ngIf="filter.values2"> - {{ filter.values2 }}</span>
+                    </span>
+                    <button class="text-red-500 hover:text-red-600" aria-label="Remove filter"
+                        (click)="removeFilter(i)">
                         <i class="pi pi-times"></i>
                     </button>
                 </div>
 
-                <!-- Another Filter Chip -->
-                <div
-                    class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-gray-100 text-gray-900 border border-gray-200">
-                    <i class="pi pi-filter text-gray-700"></i>
-                    <span class="text-sm font-medium whitespace-nowrap"> Color : Market | Date : Today </span>
-                    <button class="text-red-500 hover:text-red-600" aria-label="Remove filter">
-                        <i class="pi pi-times"></i>
-                    </button>
-                </div>
-
-                <button
+                <button *ngIf="activeFilters.length > 0"
                     class="flex items-center gap-2 !rounded-full !px-5 !py-2.5 !bg-white !text-gray-700 !border !border-gray-300 hover:!bg-gray-50"
                     (click)="removeAllFilters()">
                     <i class="pi pi-trash text-sm"></i>
@@ -232,28 +226,21 @@
 
                 <!-- Active Filters -->
                 <div class="flex flex-wrap items-center gap-3 mt-5">
-                    <!-- Filter Chip -->
-                    <div
+                    <!-- Dynamic Filter Chips -->
+                    <div *ngFor="let filter of activeFilters; let i = index"
                         class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-gray-100 text-gray-900 border border-gray-200">
                         <i class="pi pi-filter text-gray-700"></i>
-                        <span class="text-sm font-medium whitespace-nowrap"> Color : Bwic Cover | Px : Less than 100
+                        <span class="text-sm font-medium whitespace-nowrap">
+                            {{ filter.columnDisplay }} : {{ filter.operatorDisplay }} {{ filter.values }}
+                            <span *ngIf="filter.values2"> - {{ filter.values2 }}</span>
                         </span>
-                        <button class="text-red-500 hover:text-red-600" aria-label="Remove filter">
+                        <button class="text-red-500 hover:text-red-600" aria-label="Remove filter"
+                            (click)="removeFilter(i)">
                             <i class="pi pi-times"></i>
                         </button>
                     </div>
 
-                    <!-- Another Filter Chip -->
-                    <div
-                        class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-gray-100 text-gray-900 border border-gray-200">
-                        <i class="pi pi-filter text-gray-700"></i>
-                        <span class="text-sm font-medium whitespace-nowrap"> Color : Market | Date : Today </span>
-                        <button class="text-red-500 hover:text-red-600" aria-label="Remove filter">
-                            <i class="pi pi-times"></i>
-                        </button>
-                    </div>
-
-                    <button
+                    <button *ngIf="activeFilters.length > 0"
                         class="flex items-center gap-2 !rounded-full !px-5 !py-2.5 !bg-white !text-gray-700 !border !border-gray-300 hover:!bg-gray-50"
                         (click)="removeAllFilters()">
                         <i class="pi pi-trash text-sm"></i>
