@@ -103,12 +103,28 @@ export class CustomTableComponent implements OnChanges, AfterViewChecked {
     }
   }
 
+  private _rowIdCounter = 0;
+
   private initializeData() {
-    this._processedData = this._rawData.map((row, index) => ({
-      ...row,
-      _rowId: row._rowId || `row_${index}_${Date.now()}`,
-      _selected: row._selected || false
-    }));
+    // Guarantee unique _rowId for every row, even if the parent component
+    // passes duplicate _rowId values (e.g. same message_id for multiple rows).
+    const usedIds = new Set<string>();
+
+    this._processedData = this._rawData.map((row, index) => {
+      let rowId = row._rowId || `row_${index}_${++this._rowIdCounter}`;
+
+      // If the ID is already taken, make it unique with a suffix
+      if (usedIds.has(rowId)) {
+        rowId = `${rowId}_${++this._rowIdCounter}`;
+      }
+      usedIds.add(rowId);
+
+      return {
+        ...row,
+        _rowId: rowId,
+        _selected: row._selected || false
+      };
+    });
 
     this.updateDisplayData();
   }
@@ -182,16 +198,23 @@ export class CustomTableComponent implements OnChanges, AfterViewChecked {
     }
   }
 
-  /** Find the _rowId of the parent for a child row */
+  /** Find the _rowId of the parent for a child row using parentRow field */
   private getParentRowId(childRow: TableRow): string | null {
-    // Children are placed after their parent in the array.
-    // Walk backwards from this child to find its parent.
-    const childIndex = this._processedData.indexOf(childRow);
-    for (let i = childIndex - 1; i >= 0; i--) {
-      if (this._processedData[i].isParent === true) {
-        return this._processedData[i]._rowId || null;
-      }
+    if (childRow.parentRow === undefined || childRow.parentRow === null) return null;
+
+    const parentRef = String(childRow.parentRow);
+
+    // Match parentRow value against parent's _rowId or messageId
+    for (const row of this._processedData) {
+      if (row.isParent !== true) continue;
+      // Direct _rowId match (e.g. parentRow = "row_123")
+      if (row._rowId === parentRef) return row._rowId!;
+      // parentRow is the raw message_id, _rowId is "row_{message_id}"
+      if (row._rowId === `row_${parentRef}`) return row._rowId!;
+      // Match against messageId field
+      if (String(row['messageId'] ?? '') === parentRef) return row._rowId!;
     }
+
     return null;
   }
 
@@ -212,17 +235,25 @@ export class CustomTableComponent implements OnChanges, AfterViewChecked {
   }
 
   hasChildren(row: TableRow): boolean {
-    return row.isParent === true && (row.childrenCount ?? 0) > 0;
+    if (row.isParent !== true) return false;
+    // Use childrenCount if available, otherwise check actual data
+    if ((row.childrenCount ?? 0) > 0) return true;
+    // Fallback: check if any row in _processedData references this as parent
+    return this._processedData.some(
+      r => !r.isParent && r.parentRow !== undefined && r.parentRow !== null &&
+           this.getParentRowId(r) === row._rowId
+    );
   }
 
   // ==================== SELECTION ====================
 
   toggleSelectAll() {
     const allVisibleSelected = this.isAllSelected();
+    const newState = !allVisibleSelected;
+    // displayData rows are the same object references as _processedData entries,
+    // so setting _selected here updates both arrays automatically.
     this.displayData.forEach(row => {
-      row._selected = !allVisibleSelected;
-      const dataRow = this._processedData.find(r => r._rowId === row._rowId);
-      if (dataRow) dataRow._selected = !allVisibleSelected;
+      row._selected = newState;
     });
     this.updateSelectedRows();
     this.cdr.markForCheck();
@@ -237,11 +268,9 @@ export class CustomTableComponent implements OnChanges, AfterViewChecked {
   }
 
   toggleRowSelection(row: TableRow) {
-    const dataRow = this._processedData.find(r => r._rowId === row._rowId);
-    if (dataRow) {
-      dataRow._selected = !dataRow._selected;
-      row._selected = dataRow._selected;
-    }
+    // row is already a direct reference to the _processedData object
+    // (displayData pushes the same references), so toggle directly.
+    row._selected = !row._selected;
     this.updateSelectedRows();
     this.cdr.markForCheck();
   }
@@ -299,11 +328,8 @@ export class CustomTableComponent implements OnChanges, AfterViewChecked {
     // In non-editable mode, primary field triggers a lookup instead of local save
     if (!this.config.editable && field === this.primaryField) {
       if (newValue && newValue !== oldValue) {
+        // row is a direct reference to _processedData entry, so this updates both
         row[field] = newValue;
-        const dataRow = this._processedData.find(r => r._rowId === row._rowId);
-        if (dataRow) {
-          dataRow[field] = newValue;
-        }
         this.primaryFieldLookup.emit({ row, value: newValue });
       }
       this.editingCell = null;
@@ -313,12 +339,8 @@ export class CustomTableComponent implements OnChanges, AfterViewChecked {
     }
 
     if (oldValue !== newValue) {
+      // row is a direct reference to _processedData entry, so this updates both
       row[field] = newValue;
-
-      const dataRow = this._processedData.find(r => r._rowId === row._rowId);
-      if (dataRow) {
-        dataRow[field] = newValue;
-      }
 
       this.cellEdited.emit({ row, field, oldValue, newValue });
       this.dataChanged.emit(this._processedData);
@@ -457,24 +479,21 @@ export class CustomTableComponent implements OnChanges, AfterViewChecked {
       return;
     }
 
+    // selectedRows contains direct references to _processedData entries
     const row = this.selectedRows[0];
-    const dataRow = this._processedData.find(r => r._rowId === row._rowId);
+    row['isParent'] = true;
+    row['parentRow'] = undefined;
 
-    if (dataRow) {
-      dataRow['isParent'] = true;
-      dataRow['parentRow'] = undefined;
+    this.updateDisplayData();
+    this.dataChanged.emit(this._processedData);
 
-      this.updateDisplayData();
-      this.dataChanged.emit(this._processedData);
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Updated',
+      detail: 'Row assigned as parent'
+    });
 
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Updated',
-        detail: 'Row assigned as parent'
-      });
-
-      this.cdr.markForCheck();
-    }
+    this.cdr.markForCheck();
   }
 
   saveSelectedRows() {

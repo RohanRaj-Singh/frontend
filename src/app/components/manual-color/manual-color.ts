@@ -186,7 +186,7 @@ export class ManualColor implements OnInit {
             rank: row.rank,
             isParent: row.is_parent,
             parentRow: row.parent_message_id,  // Use parent_message_id
-            childrenCount: row.child_count || 0
+            childrenCount: row.children_count || 0
           }));
 
           this.showImportDialog = false;

@@ -100,7 +100,8 @@
           *ngFor="let row of displayData; trackBy: trackByRowId"
           [class.selected-row]="isRowSelected(row)"
           [class.parent-row]="isParentRow(row)"
-          [class.child-row]="isChildRow(row)">
+          [class.child-row]="isChildRow(row)"
+          (mousedown)="$event.preventDefault()">
 
           <!-- Select Button -->
           <td *ngIf="config.showSelectButton" class="select-column"
@@ -108,14 +109,15 @@
             <button
               class="select-btn"
               [class.selected]="isRowSelected(row)"
-              (mousedown)="$event.stopPropagation()"
+              (mousedown)="$event.stopPropagation(); $event.preventDefault()"
               (click)="$event.stopPropagation(); toggleRowSelection(row)">
               <i class="pi pi-check" *ngIf="isRowSelected(row)"></i>
             </button>
           </td>
 
           <!-- Row Number Cell -->
-          <td *ngIf="config.showRowNumbers" class="row-number-column">
+          <td *ngIf="config.showRowNumbers" class="row-number-column"
+              (mousedown)="$event.stopPropagation(); $event.preventDefault()">
             <div class="row-number">{{ getDisplayRowNumber(row) }}</div>
           </td>
 
@@ -124,7 +126,7 @@
               [class.editable-cell]="canEditCell(column)"
               [class.primary-field-cell]="!config.editable && column.field === primaryField"
               [class.child-data-cell]="isChildRow(row)"
-              (mousedown)="$event.stopPropagation()"
+              (mousedown)="$event.stopPropagation(); $event.preventDefault()"
               (click)="$event.stopPropagation(); canEditCell(column) && startEdit(row, column.field)">
 
             <!-- Normal Display -->
@@ -154,7 +156,7 @@
             <button
               *ngIf="isParentRow(row) && hasChildren(row)"
               class="row-expand-btn"
-              (mousedown)="$event.stopPropagation()"
+              (mousedown)="$event.stopPropagation(); $event.preventDefault()"
               (click)="$event.stopPropagation(); toggleRowExpand(row)"
               [pTooltip]="isRowExpanded(row) ? 'Collapse' : 'Expand'"
               tooltipPosition="left">
